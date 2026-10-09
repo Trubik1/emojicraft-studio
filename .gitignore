@@ -5,6 +5,7 @@ node_modules/
 # Production builds
 dist/
 */dist/
+cloudflared.exe
 
 # Environment variables
 .env
