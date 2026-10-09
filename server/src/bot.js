@@ -15,12 +15,25 @@ export const bot = new Bot(token || 'DUMMY_TOKEN');
 // In-memory store for user packs (in production use SQLite/Postgres)
 const userPacks = new Map();
 
+// Error handler to prevent crashes
+bot.catch((err) => {
+  console.error('❌ Ошибка в обработчике бота:', err.message);
+});
+
+// Helper to check if URL is valid HTTPS for Telegram WebApp
+const isHttps = (url) => url && url.startsWith('https://');
+
 // Command: /start
 bot.command('start', async (ctx) => {
-  const keyboard = new InlineKeyboard()
-    .webApp('✨ Открыть EmojiCraft Studio', webAppUrl)
-    .row()
-    .url('💬 Поддержка & Сообщество', 'https://t.me/telegram');
+  const keyboard = new InlineKeyboard();
+
+  if (isHttps(webAppUrl)) {
+    keyboard.webApp('✨ Открыть EmojiCraft Studio', webAppUrl);
+  } else {
+    keyboard.url('🌐 Открыть в браузере (Dev)', webAppUrl);
+  }
+
+  keyboard.row().url('💬 Поддержка & Сообщество', 'https://t.me/telegram');
 
   const text = `
 👋 **Добро пожаловать в EmojiCraft Studio!**
@@ -37,7 +50,7 @@ bot.command('start', async (ctx) => {
 • \`/newpack <название>\` — создать свой персональный стикерпак
 • \`/newemoji <название>\` — создать свой эмодзи-пак (для Premium)
 
-👇 *Нажмите кнопку ниже, чтобы открыть студию прямо в Telegram:*
+👇 *Нажмите кнопку ниже, чтобы открыть студию:*
 `;
 
   await ctx.reply(text, {
@@ -97,7 +110,12 @@ bot.on('message:text', async (ctx, next) => {
 
   response += `💡 *Используйте эти ID для верстки постов или в коде ваших ботов.*`;
 
-  const keyboard = new InlineKeyboard().webApp('🎨 Открыть в Студии', webAppUrl);
+  const keyboard = new InlineKeyboard();
+  if (isHttps(webAppUrl)) {
+    keyboard.webApp('🎨 Открыть в Студии', webAppUrl);
+  } else {
+    keyboard.url('🎨 Открыть в Студии', webAppUrl);
+  }
 
   await ctx.reply(response, {
     parse_mode: 'Markdown',
@@ -107,10 +125,12 @@ bot.on('message:text', async (ctx, next) => {
 
 // Listener for video, animation (GIF) or round video note (like @MoiStikiBot)
 bot.on(['message:animation', 'message:video', 'message:video_note'], async (ctx) => {
-  const keyboard = new InlineKeyboard()
-    .webApp('🎬 Открыть в Media Converter', webAppUrl)
-    .row()
-    .webApp('✨ Сделать кастомный эмодзи (100×100)', webAppUrl);
+  const keyboard = new InlineKeyboard();
+  if (isHttps(webAppUrl)) {
+    keyboard.webApp('🎬 Открыть в Media Converter', webAppUrl).row().webApp('✨ Сделать кастомный эмодзи', webAppUrl);
+  } else {
+    keyboard.url('🎬 Открыть в Media Converter', webAppUrl);
+  }
 
   await ctx.reply(
     '📹 **Медиа получено!**\nХотите наложить мемный текст, стикерный контур или конвертировать видео/GIF в Telegram WebM стикер?',
@@ -126,10 +146,12 @@ bot.on('message:photo', async (ctx) => {
   const userId = ctx.from?.id;
   const currentPack = userPacks.get(userId);
 
-  const keyboard = new InlineKeyboard()
-    .webApp('🧩 Нарезать в Grid Slicer', webAppUrl)
-    .row()
-    .webApp('🎨 Открыть в Студии', webAppUrl);
+  const keyboard = new InlineKeyboard();
+  if (isHttps(webAppUrl)) {
+    keyboard.webApp('🧩 Нарезать в Grid Slicer', webAppUrl).row().webApp('🎨 Открыть в Студии', webAppUrl);
+  } else {
+    keyboard.url('🧩 Нарезать в Grid Slicer', webAppUrl);
+  }
 
   let text = '📸 **Фото получено!**\n\nВыберите действие:\n• Нарезать на сетку эмодзи-пазлов (2×2, 3×3, 4×4)\n• Открыть в Студии для наложения букв и эффектов';
 
