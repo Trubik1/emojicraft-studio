@@ -12,6 +12,9 @@ if (!token) {
 
 export const bot = new Bot(token || 'DUMMY_TOKEN');
 
+// In-memory store for user packs (in production use SQLite/Postgres)
+const userPacks = new Map();
+
 // Command: /start
 bot.command('start', async (ctx) => {
   const keyboard = new InlineKeyboard()
@@ -30,6 +33,10 @@ bot.command('start', async (ctx) => {
 🔍 **Emoji Inspector** — определение системных \`custom_emoji_id\` и ссылки на оригинальные паки.
 💬 **Live Chat Simulator** — тест отображения в сообщениях и статусе профиля.
 
+📦 **Быстрые команды для паков (как в @MoiStikiBot):**
+• \`/newpack <название>\` — создать свой персональный стикерпак
+• \`/newemoji <название>\` — создать свой эмодзи-пак (для Premium)
+
 👇 *Нажмите кнопку ниже, чтобы открыть студию прямо в Telegram:*
 `;
 
@@ -37,6 +44,31 @@ bot.command('start', async (ctx) => {
     reply_markup: keyboard,
     parse_mode: 'Markdown',
   });
+});
+
+// Command: /newpack (Создание персонального стикерпака в Telegram)
+bot.command('newpack', async (ctx) => {
+  const title = ctx.match || 'My EmojiCraft Stickers';
+  const userId = ctx.from?.id;
+  const botInfo = await ctx.api.getMe();
+  const shortName = `pack_${userId}_${Date.now().toString(36)}`;
+  const packName = `${shortName}_by_${botInfo.username}`;
+
+  userPacks.set(userId, { packName, title, type: 'regular' });
+
+  const keyboard = new InlineKeyboard()
+    .webApp('🎨 Создать стикер в Студии', webAppUrl);
+
+  await ctx.reply(
+    `📦 **Стикерпак инициализирован!**\n\n` +
+    `• Название: **${title}**\n` +
+    `• Ссылка пака: \`https://t.me/addstickers/${packName}\`\n\n` +
+    `Теперь отправьте мне любое **фото, видео, GIF или файл стикера**, чтобы добавить его первым в этот пак!`,
+    {
+      reply_markup: keyboard,
+      parse_mode: 'Markdown',
+    }
+  );
 });
 
 // Listener for messages with Custom Emojis (Emoji ID Finder like @PremiumEmojidBot)
@@ -89,17 +121,26 @@ bot.on(['message:animation', 'message:video', 'message:video_note'], async (ctx)
   );
 });
 
-// Listener for photos: suggests opening Grid Slicer
+// Listener for photos: suggests opening Grid Slicer or adding to pack
 bot.on('message:photo', async (ctx) => {
-  const keyboard = new InlineKeyboard().webApp('🧩 Нарезать в Grid Slicer', webAppUrl);
+  const userId = ctx.from?.id;
+  const currentPack = userPacks.get(userId);
 
-  await ctx.reply(
-    '📸 **Отличное фото!**\nХотите нарезать его на сетку эмодзи (2×2, 3×3 или 4×4) для огромного постера в чате?',
-    {
-      reply_markup: keyboard,
-      parse_mode: 'Markdown',
-    }
-  );
+  const keyboard = new InlineKeyboard()
+    .webApp('🧩 Нарезать в Grid Slicer', webAppUrl)
+    .row()
+    .webApp('🎨 Открыть в Студии', webAppUrl);
+
+  let text = '📸 **Фото получено!**\n\nВыберите действие:\n• Нарезать на сетку эмодзи-пазлов (2×2, 3×3, 4×4)\n• Открыть в Студии для наложения букв и эффектов';
+
+  if (currentPack) {
+    text += `\n\n💡 *У вас активен пак [${currentPack.title}](https://t.me/addstickers/${currentPack.packName})*.`;
+  }
+
+  await ctx.reply(text, {
+    reply_markup: keyboard,
+    parse_mode: 'Markdown',
+  });
 });
 
 // Start bot if run directly
