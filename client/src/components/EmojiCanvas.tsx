@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { EmojiConfig } from '../types';
 import { renderEmojiFrame } from '../utils/canvasRenderer';
 import { exportStaticPng, downloadDataUrl, recordAnimatedWebm } from '../utils/exporter';
+import { saveEmojiToGallery } from '../utils/galleryStorage';
 import { useTelegram } from '../hooks/useTelegram';
 import confetti from 'canvas-confetti';
-import { Download, Film, Sparkles, Move, RefreshCw } from 'lucide-react';
+import { Download, Film, Sparkles, Move, RotateCcw, Check } from 'lucide-react';
 
 interface Props {
   config: EmojiConfig;
@@ -19,9 +20,10 @@ export const EmojiCanvas: React.FC<Props> = ({ config, onChangeConfig }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordProgress, setRecordProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
 
-  // Animation Loop
+  // Animation Loop (60 FPS)
   useEffect(() => {
     let startTime = performance.now();
 
@@ -69,8 +71,8 @@ export const EmojiCanvas: React.FC<Props> = ({ config, onChangeConfig }) => {
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging || !dragStartRef.current) return;
-    const dx = (e.clientX - dragStartRef.current.x) * 0.4;
-    const dy = (e.clientY - dragStartRef.current.y) * 0.4;
+    const dx = (e.clientX - dragStartRef.current.x) * 0.45;
+    const dy = (e.clientY - dragStartRef.current.y) * 0.45;
     onChangeConfig({
       ...config,
       letterOffsetX: Math.max(-50, Math.min(50, Math.round(dragStartRef.current.initialOffsetX + dx))),
@@ -89,7 +91,17 @@ export const EmojiCanvas: React.FC<Props> = ({ config, onChangeConfig }) => {
     const dataUrl = await exportStaticPng(config, res);
     const suffix = res === 100 ? 'emoji_100x100' : 'sticker_512x512';
     downloadDataUrl(dataUrl, `custom_${config.character}_${suffix}.png`);
-    confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
+    saveEmojiToGallery(config.character, config.baseShape, dataUrl, config);
+    
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
+
+    confetti({
+      particleCount: 45,
+      spread: 60,
+      origin: { y: 0.8 },
+      colors: ['#34d399', '#38bdf8', '#fbbf24', '#f43f5e'],
+    });
     haptic.success();
   };
 
@@ -114,7 +126,16 @@ export const EmojiCanvas: React.FC<Props> = ({ config, onChangeConfig }) => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      confetti({ particleCount: 100, spread: 80, origin: { y: 0.7 } });
+      // Save static preview to gallery
+      const previewUrl = await exportStaticPng(config, 100);
+      saveEmojiToGallery(config.character, config.baseShape, previewUrl, config);
+
+      confetti({
+        particleCount: 80,
+        spread: 80,
+        origin: { y: 0.7 },
+        colors: ['#34d399', '#38bdf8', '#c084fc', '#ffffff'],
+      });
       haptic.success();
     } catch (err) {
       console.error(err);
@@ -137,90 +158,121 @@ export const EmojiCanvas: React.FC<Props> = ({ config, onChangeConfig }) => {
 
   return (
     <div className="flex flex-col items-center w-full max-w-sm mx-auto">
-      {/* Canvas Display Card */}
-      <div className="relative p-6 rounded-3xl bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 shadow-2xl backdrop-blur-xl w-full flex flex-col items-center">
-        
-        {/* Transparency Checkered Canvas Background */}
-        <div 
-          className="relative w-64 h-64 rounded-2xl flex items-center justify-center overflow-hidden border border-slate-700/60 shadow-inner select-none cursor-move group"
-          style={{
-            backgroundImage: `radial-gradient(#334155 1px, transparent 1px), radial-gradient(#334155 1px, #0f172a 1px)`,
-            backgroundSize: '16px 16px',
-            backgroundPosition: '0 0, 8px 8px',
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-        >
-          {/* Native High-DPI Canvas */}
-          <canvas
-            ref={canvasRef}
-            width={400}
-            height={400}
-            className="w-full h-full object-contain pointer-events-none drop-shadow-md"
-          />
+      {/* Cyber Bento Stage */}
+      <div className="bento-card cyber-frame w-full p-4 relative overflow-hidden">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
 
-          {/* Drag Overlay Hint */}
-          <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/70 text-[11px] text-slate-300 font-medium flex items-center gap-1.5 backdrop-blur-md opacity-80 group-hover:opacity-100 transition-opacity">
-            <Move size={12} className="text-sky-400" />
-            <span>Тяни букву пальцем</span>
+        {/* Header inside stage card */}
+        <div className="flex items-center justify-between mb-3 text-xs">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse" />
+            <span className="font-mono-code text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+              {config.baseShape === 'omnom' ? 'Ам Ням 3D' : config.baseShape} • 60 FPS
+            </span>
           </div>
 
-          {/* Reset position icon if moved */}
-          {(config.letterOffsetX !== 0 || config.letterOffsetY !== 0) && (
+          {(config.letterOffsetX !== 0 || config.letterOffsetY !== 0 || config.letterRotation !== 0) && (
             <button
-              onClick={(e) => { e.stopPropagation(); resetOffset(); }}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/80 border border-slate-700 text-slate-300 hover:text-white transition-colors"
+              onClick={resetOffset}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 hover:bg-white/10 text-[10px] text-slate-400 hover:text-white transition-colors"
               title="Сбросить позицию"
             >
-              <RefreshCw size={13} />
+              <RotateCcw size={10} />
+              <span>Центр</span>
             </button>
-          )}
-
-          {/* Recording Progress Bar */}
-          {isRecording && (
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20">
-              <Film className="w-8 h-8 text-sky-400 animate-spin" />
-              <div className="text-xs font-semibold text-slate-200">
-                Запись WebM VP9: {recordProgress}%
-              </div>
-              <div className="w-40 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 transition-all duration-100" 
-                  style={{ width: `${recordProgress}%` }}
-                />
-              </div>
-            </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2.5 w-full mt-4">
-          <button
-            onClick={() => handleExportPng(100)}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-750 text-slate-100 font-semibold text-xs border border-slate-700 active:scale-95 transition-all shadow-sm"
-          >
-            <Download size={14} className="text-emerald-400" />
-            <span>Emoji PNG (100×100)</span>
-          </button>
+        {/* Main Canvas with touch/pointer drag */}
+        <div className="relative flex items-center justify-center p-3 rounded-2xl bg-[#090b10] border border-white/5">
+          {/* Subtle Cyber Grid Background */}
+          <div
+            className="absolute inset-0 opacity-15 rounded-2xl pointer-events-none"
+            style={{
+              backgroundImage: 'radial-gradient(rgba(52, 211, 153, 0.4) 1px, transparent 1px)',
+              backgroundSize: '16px 16px',
+            }}
+          />
 
-          <button
-            onClick={() => handleExportPng(512)}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-750 text-slate-100 font-semibold text-xs border border-slate-700 active:scale-95 transition-all shadow-sm"
-          >
-            <Sparkles size={14} className="text-amber-400" />
-            <span>Стикер (512×512)</span>
-          </button>
+          <canvas
+            ref={canvasRef}
+            width={200}
+            height={200}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className={`w-[190px] h-[190px] touch-none cursor-grab active:cursor-grabbing transition-transform ${
+              isDragging ? 'scale-105' : ''
+            }`}
+          />
 
+          {/* Hint badge */}
+          <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md border border-white/10 text-[9px] font-mono-code text-slate-400 flex items-center gap-1">
+            <Move size={10} className="text-[#34d399]" />
+            <span>Тяните букву</span>
+          </div>
+        </div>
+
+        {/* Export Action Bar */}
+        <div className="mt-4 space-y-2">
+          {/* WebM Animated recording button */}
           <button
             onClick={handleExportAnimatedWebm}
             disabled={isRecording}
-            className="col-span-2 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-500 to-pink-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-sky-500/20 active:scale-95 transition-all"
+            className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
+              isRecording
+                ? 'bg-[#15803d]/40 text-[#86efac] border border-[#22c55e]/40'
+                : 'bg-gradient-to-r from-[#059669] to-[#10b981] hover:from-[#10b981] hover:to-[#34d399] text-black font-extrabold shadow-lg shadow-[#10b981]/20 active:scale-[0.98]'
+            }`}
           >
-            <Film size={16} />
-            <span>{isRecording ? 'Рендеринг...' : 'Экспорт Animated WebM (Telegram Video)'}</span>
+            {isRecording ? (
+              <>
+                <div
+                  className="absolute inset-y-0 left-0 bg-[#22c55e]/30 transition-all duration-100"
+                  style={{ width: `${recordProgress}%` }}
+                />
+                <Film size={14} className="animate-spin relative z-10" />
+                <span className="relative z-10 font-mono-code">
+                  Запись VP9 WebM... {recordProgress}%
+                </span>
+              </>
+            ) : (
+              <>
+                <Film size={14} />
+                <span>Скачать анимированный WebM (Telegram)</span>
+              </>
+            )}
           </button>
+
+          {/* Static PNGs split buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => handleExportPng(100)}
+              className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-white font-medium text-[11px] flex items-center justify-center gap-1.5 transition-all"
+            >
+              <Download size={13} className="text-[#34d399]" />
+              <span>PNG 100×100 (Эмодзи)</span>
+            </button>
+
+            <button
+              onClick={() => handleExportPng(512)}
+              className="py-2 px-2.5 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-white font-medium text-[11px] flex items-center justify-center gap-1.5 transition-all"
+            >
+              <Sparkles size={13} className="text-[#38bdf8]" />
+              <span>PNG 512×512 (Стикер)</span>
+            </button>
+          </div>
+
+          {justSaved && (
+            <div className="flex items-center justify-center gap-1.5 py-1 text-[11px] font-semibold text-[#34d399] animate-fade-in">
+              <Check size={13} />
+              <span>Сохранено в «Мою коллекцию»!</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -2,21 +2,44 @@
 
 @layer base {
   :root {
-    --tg-theme-bg-color: #12151b;
-    --tg-theme-secondary-bg-color: #1a1e26;
-    --tg-theme-text-color: #f8fafc;
-    --tg-theme-hint-color: #94a3b8;
-    --tg-theme-link-color: #38bdf8;
-    --tg-theme-button-color: #0284c7;
-    --tg-theme-button-text-color: #ffffff;
+    --bg-deep: #08090c;
+    --bg-surface: #0e1017;
+    --card-bg: rgba(16, 19, 26, 0.86);
+    --card-bg-solid: #11131a;
+    --card-hover: rgba(22, 26, 36, 0.95);
+    --card-sub: rgba(255, 255, 255, 0.035);
+
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --border-active: #34d399;
+
+    --text-main: #ffffff;
+    --text-muted: #8e95a5;
+    --text-sub: #555b6d;
+
+    --accent-green: #34d399;
+    --accent-blue: #38bdf8;
+    --accent-glow: rgba(52, 211, 153, 0.2);
+
+    --font-main: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Geist Mono', ui-monospace, monospace;
+
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 9999px;
+
+    --shadow-card: 0 16px 40px -10px rgba(0, 0, 0, 0.7);
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   body {
     margin: 0;
     padding: 0;
-    background-color: var(--tg-theme-bg-color, #0f172a);
-    color: var(--tg-theme-text-color, #f8fafc);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    font-family: var(--font-main);
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -24,22 +47,97 @@
   }
 }
 
-/* Custom animated glow and effects */
-@keyframes pulse-slow {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
+/* Cyber Frame & Corner Crosses */
+.cyber-frame {
+  position: relative;
 }
 
-@keyframes sparkle {
-  0% { transform: scale(0) rotate(0deg); opacity: 0; }
-  50% { transform: scale(1.2) rotate(90deg); opacity: 1; }
-  100% { transform: scale(0) rotate(180deg); opacity: 0; }
+.corner-cross {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+  z-index: 2;
 }
 
-.animate-sparkle {
-  animation: sparkle 2s infinite ease-in-out;
+.corner-cross::before,
+.corner-cross::after {
+  content: '';
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.28);
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 3s infinite ease-in-out;
+.corner-cross::before {
+  top: 4px;
+  left: 0;
+  width: 9px;
+  height: 1px;
+}
+
+.corner-cross::after {
+  top: 0;
+  left: 4px;
+  width: 1px;
+  height: 9px;
+}
+
+.corner-cross.tl { top: -4px; left: -4px; }
+.corner-cross.tr { top: -4px; right: -4px; }
+.corner-cross.bl { bottom: -4px; left: -4px; }
+.corner-cross.br { bottom: -4px; right: -4px; }
+
+/* Bento Card Style */
+.bento-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.25s var(--ease-spring), transform 0.25s var(--ease-spring);
+}
+
+.bento-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Active Glow Card */
+.bento-card-active {
+  border-color: rgba(52, 211, 153, 0.5) !important;
+  box-shadow: 0 0 24px -4px var(--accent-glow) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Monospace Code / Numeric Badges */
+.font-mono-code {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' on, 'zero' on;
+}
+
+/* Subtle pulse */
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-subtle-float {
+  animation: subtle-float 4s ease-in-out infinite;
 }

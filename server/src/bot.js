@@ -4,23 +4,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const token = process.env.BOT_TOKEN;
-const webAppUrl = process.env.WEBAPP_URL || 'https://localhost:5173';
+const webAppUrl = process.env.WEBAPP_URL || 'https://client-wheat-three-83.vercel.app';
 
 if (!token) {
-  console.warn('⚠️ Внимание: BOT_TOKEN не указан в файле .env. Укажите токен для запуска Telegram бота.');
+  console.warn('⚠️ Внимание: BOT_TOKEN не указан в файле .env.');
 }
 
 export const bot = new Bot(token || 'DUMMY_TOKEN');
 
-// In-memory store for user packs (in production use SQLite/Postgres)
+// In-memory store for user packs
 const userPacks = new Map();
 
-// Error handler to prevent crashes
 bot.catch((err) => {
   console.error('❌ Ошибка в обработчике бота:', err.message);
 });
 
-// Helper to check if URL is valid HTTPS for Telegram WebApp
 const isHttps = (url) => url && url.startsWith('https://');
 
 // Command: /start
@@ -33,24 +31,21 @@ bot.command('start', async (ctx) => {
     keyboard.url('🌐 Открыть в браузере (Dev)', webAppUrl);
   }
 
-  keyboard.row().url('💬 Поддержка & Сообщество', 'https://t.me/telegram');
+  keyboard.row().url('💬 Канал Trubik', 'https://t.me/Trubik11');
 
   const text = `
-👋 **Добро пожаловать в EmojiCraft Studio!**
+✨ **Добро пожаловать в EmojiCraft Studio!**
 
-Это полноценная студия для создания кастомных анимированных эмодзи и стикеров в Telegram:
+Студия кастомных анимированных эмодзи и стикеров в Telegram в фирменном Cyber Bento стиле с Ам Нямом:
 
-🎨 **Emoji Studio** — анимированные буквы со смайлами, блеском ✨ и каплями 💧.
-🎬 **Media Converter** — превращение любого видео/GIF в видео-стикер (512x512) или эмодзи (100x100) с мемным текстом!
-🧩 **Grid Slicer** — нарезка фото на сетку эмодзи (2×2, 3×3, 4×4) для бесшовных постеров в чате.
-🔍 **Emoji Inspector** — определение системных \`custom_emoji_id\` и ссылки на оригинальные паки.
-💬 **Live Chat Simulator** — тест отображения в сообщениях и статусе профиля.
+🎨 **Emoji Studio** — создание 3D букв с Ам Нямом, блеском ✨ и каплями 💧.
+🎬 **Media Converter** — нарезка видео/GIF в стикеры (512×512) и эмодзи (100×100) с мемным текстом.
+🧩 **Grid Slicer** — нарезка картинок на сетку (2×2, 3×3, 4×4) с правильным обратным порядком для чатов.
+🔍 **Emoji Inspector** — определение \`custom_emoji_id\` и ссылки на оригинальные паки.
+💬 **Live Chat Simulator** — тест отображения в статусе профиля, сообщении и реакциях.
+📁 **Моя коллекция** — локальное сохранение созданных работ.
 
-📦 **Быстрые команды для паков (как в @MoiStikiBot):**
-• \`/newpack <название>\` — создать свой персональный стикерпак
-• \`/newemoji <название>\` — создать свой эмодзи-пак (для Premium)
-
-👇 *Нажмите кнопку ниже, чтобы открыть студию:*
+👇 *Нажмите кнопку ниже, чтобы запустить приложение:*
 `;
 
   await ctx.reply(text, {
@@ -59,7 +54,7 @@ bot.command('start', async (ctx) => {
   });
 });
 
-// Command: /newpack (Создание персонального стикерпака в Telegram)
+// Command: /newpack
 bot.command('newpack', async (ctx) => {
   const title = ctx.match || 'My EmojiCraft Stickers';
   const userId = ctx.from?.id;
@@ -70,13 +65,13 @@ bot.command('newpack', async (ctx) => {
   userPacks.set(userId, { packName, title, type: 'regular' });
 
   const keyboard = new InlineKeyboard()
-    .webApp('🎨 Создать стикер в Студии', webAppUrl);
+    .webApp('🎨 Создать стикер в Студии', `${webAppUrl}?tab=studio`);
 
   await ctx.reply(
     `📦 **Стикерпак инициализирован!**\n\n` +
     `• Название: **${title}**\n` +
-    `• Ссылка пака: \`https://t.me/addstickers/${packName}\`\n\n` +
-    `Теперь отправьте мне любое **фото, видео, GIF или файл стикера**, чтобы добавить его первым в этот пак!`,
+    `• Ссылка: \`https://t.me/addstickers/${packName}\`\n\n` +
+    `Откройте Студию, создайте эмодзи или стикер и скачайте WebM файл!`,
     {
       reply_markup: keyboard,
       parse_mode: 'Markdown',
@@ -84,7 +79,7 @@ bot.command('newpack', async (ctx) => {
   );
 });
 
-// Listener for messages with Custom Emojis (Emoji ID Finder like @PremiumEmojidBot)
+// Listener for messages with Custom Emojis (Emoji ID Finder)
 bot.on('message:text', async (ctx, next) => {
   const entities = ctx.message.entities || [];
   const customEmojiEntities = entities.filter((e) => e.type === 'custom_emoji');
@@ -96,6 +91,7 @@ bot.on('message:text', async (ctx, next) => {
   await ctx.replyWithChatAction('typing');
 
   let response = `🔍 **Обнаружены кастомные эмодзи (${customEmojiEntities.length} шт.):**\n\n`;
+  const firstId = customEmojiEntities[0].custom_emoji_id;
 
   for (let i = 0; i < customEmojiEntities.length; i++) {
     const entity = customEmojiEntities[i];
@@ -104,17 +100,16 @@ bot.on('message:text', async (ctx, next) => {
 
     response += `🔹 **Эмодзи #${i + 1}:** ${char}\n`;
     response += `• \`custom_emoji_id:\` \`${emojiId}\`\n`;
-    response += `• \`HTML tag:\` \`<tg-emoji emoji-id="${emojiId}">${char}</tg-emoji>\`\n`;
+    response += `• \`HTML:\` \`<tg-emoji emoji-id="${emojiId}">${char}</tg-emoji>\`\n`;
     response += `• \`Markdown:\` \`[${char}](tg://emoji?id=${emojiId})\`\n\n`;
   }
 
-  response += `💡 *Используйте эти ID для верстки постов или в коде ваших ботов.*`;
-
   const keyboard = new InlineKeyboard();
+  const inspectUrl = `${webAppUrl}?tab=inspector&id=${firstId}`;
   if (isHttps(webAppUrl)) {
-    keyboard.webApp('🎨 Открыть в Студии', webAppUrl);
+    keyboard.webApp('🔍 Инспектировать в Студии', inspectUrl);
   } else {
-    keyboard.url('🎨 Открыть в Студии', webAppUrl);
+    keyboard.url('🔍 Инспектировать в Студии', inspectUrl);
   }
 
   await ctx.reply(response, {
@@ -123,17 +118,18 @@ bot.on('message:text', async (ctx, next) => {
   });
 });
 
-// Listener for video, animation (GIF) or round video note (like @MoiStikiBot)
+// Listener for video or GIF
 bot.on(['message:animation', 'message:video', 'message:video_note'], async (ctx) => {
   const keyboard = new InlineKeyboard();
+  const mediaUrl = `${webAppUrl}?tab=media`;
   if (isHttps(webAppUrl)) {
-    keyboard.webApp('🎬 Открыть в Media Converter', webAppUrl).row().webApp('✨ Сделать кастомный эмодзи', webAppUrl);
+    keyboard.webApp('🎬 Конвертировать в Студии', mediaUrl);
   } else {
-    keyboard.url('🎬 Открыть в Media Converter', webAppUrl);
+    keyboard.url('🎬 Конвертировать в Студии', mediaUrl);
   }
 
   await ctx.reply(
-    '📹 **Медиа получено!**\nХотите наложить мемный текст, стикерный контур или конвертировать видео/GIF в Telegram WebM стикер?',
+    '📹 **Медиа получено!**\nОткройте Media Converter в Студии, чтобы наложить мемный текст, стикерный контур и конвертировать в Telegram WebM стикер (512×512) или эмодзи (100×100)!',
     {
       reply_markup: keyboard,
       parse_mode: 'Markdown',
@@ -141,31 +137,26 @@ bot.on(['message:animation', 'message:video', 'message:video_note'], async (ctx)
   );
 });
 
-// Listener for photos: suggests opening Grid Slicer or adding to pack
+// Listener for photos
 bot.on('message:photo', async (ctx) => {
-  const userId = ctx.from?.id;
-  const currentPack = userPacks.get(userId);
-
   const keyboard = new InlineKeyboard();
+  const slicerUrl = `${webAppUrl}?tab=slicer`;
   if (isHttps(webAppUrl)) {
-    keyboard.webApp('🧩 Нарезать в Grid Slicer', webAppUrl).row().webApp('🎨 Открыть в Студии', webAppUrl);
+    keyboard.webApp('🧩 Нарезать баннер', slicerUrl).row().webApp('🎨 Открыть в Студии', `${webAppUrl}?tab=studio`);
   } else {
-    keyboard.url('🧩 Нарезать в Grid Slicer', webAppUrl);
+    keyboard.url('🧩 Нарезать баннер', slicerUrl);
   }
 
-  let text = '📸 **Фото получено!**\n\nВыберите действие:\n• Нарезать на сетку эмодзи-пазлов (2×2, 3×3, 4×4)\n• Открыть в Студии для наложения букв и эффектов';
-
-  if (currentPack) {
-    text += `\n\n💡 *У вас активен пак [${currentPack.title}](https://t.me/addstickers/${currentPack.packName})*.`;
-  }
-
-  await ctx.reply(text, {
-    reply_markup: keyboard,
-    parse_mode: 'Markdown',
-  });
+  await ctx.reply(
+    '📸 **Фото получено!**\n\nВыберите действие:\n• **Grid Slicer**: нарезать на сетку (2×2, 3×3, 4×4) со схемой правильной отправки в чат\n• **Emoji Studio**: наложить кастомную 3D букву и эффекты',
+    {
+      reply_markup: keyboard,
+      parse_mode: 'Markdown',
+    }
+  );
 });
 
-// Start bot if run directly
+// Start bot
 if (process.env.BOT_TOKEN) {
   bot.start({
     onStart: (botInfo) => {

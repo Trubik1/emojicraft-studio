@@ -31,7 +31,106 @@ export function renderEmojiFrame({ ctx, width, height, time, config }: RenderCon
 function drawBaseShape(ctx: CanvasRenderingContext2D, shape: string, time: number, config: EmojiConfig) {
   ctx.save();
 
-  if (shape === 'emoji-look-up') {
+  if (shape === 'omnom') {
+    // 🟢 Фирменный Ам Ням (Om Nom)
+    const cx = 100;
+    const cy = 120;
+
+    // Антенка с шариком на макушке
+    ctx.beginPath();
+    ctx.moveTo(100, 72);
+    ctx.bezierCurveTo(96, 56, 108, 46, 105, 38);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#15803d';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(106, 36, 6.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#4ade80';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#166534';
+    ctx.stroke();
+
+    // Круглое зеленое тельце Ам Няма с мягким градиентом
+    const bodyGrad = ctx.createRadialGradient(cx - 15, cy - 25, 12, cx, cy, 68);
+    bodyGrad.addColorStop(0, '#86efac'); // bright lime highlight
+    bodyGrad.addColorStop(0.35, '#22c55e'); // vibrant green
+    bodyGrad.addColorStop(0.8, '#16a34a'); // green
+    bodyGrad.addColorStop(1, '#15803d'); // deep shadow green
+
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 64, 58, 0, 0, Math.PI * 2);
+    ctx.fillStyle = bodyGrad;
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#14532d';
+    ctx.stroke();
+
+    // Милые нижние лапки
+    [64, 136].forEach((pawX) => {
+      ctx.beginPath();
+      ctx.ellipse(pawX, 168, 14, 9, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#16a34a';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#14532d';
+      ctx.stroke();
+    });
+
+    // Большие выразительные мультяшные глазки (смотрят вверх на конфету/букву)
+    const eyeY = 110;
+    const leftEyeX = 76;
+    const rightEyeX = 124;
+    const eyeR = 21;
+
+    [leftEyeX, rightEyeX].forEach((ex) => {
+      // Белок
+      ctx.beginPath();
+      ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#14532d';
+      ctx.stroke();
+
+      // Зрачок смотрящий наверх
+      const pupilX = ex + (ex < 100 ? 3 : -3);
+      const pupilY = eyeY - 8;
+      ctx.beginPath();
+      ctx.arc(pupilX, pupilY, 11, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+
+      // Блики
+      ctx.beginPath();
+      ctx.arc(pupilX - 3.5, pupilY - 3.5, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(pupilX + 2.5, pupilY + 2.5, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.fill();
+    });
+
+    // Улыбка и два белых зубика
+    ctx.beginPath();
+    ctx.arc(cx, 142, 16, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#14532d';
+    ctx.stroke();
+
+    [-6, 6].forEach((tx) => {
+      ctx.beginPath();
+      ctx.roundRect(cx + tx - 4, 142, 8, 8, [0, 0, 3, 3]);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#14532d';
+      ctx.stroke();
+    });
+  } else if (shape === 'emoji-look-up') {
     // Face body - yellow 3D sphere
     const cx = 100;
     const cy = 115;
@@ -358,12 +457,12 @@ function drawStyledLetter(
   time: number
 ) {
   const char = config.character || 'S';
-  const isEmojiLookUp = config.baseShape === 'emoji-look-up';
+  const isHeadMounted = config.baseShape === 'emoji-look-up' || config.baseShape === 'omnom';
 
   // Base position for the letter:
-  // If it's the look-up emoji, position on the forehead!
-  const basePosX = isEmojiLookUp ? 100 : 100;
-  const basePosY = isEmojiLookUp ? 68 : 105;
+  // If it's the look-up emoji or Om Nom, position on the forehead/hovering above!
+  const basePosX = 100;
+  const basePosY = isHeadMounted ? 65 : 105;
 
   let posX = basePosX + config.letterOffsetX;
   let posY = basePosY + config.letterOffsetY;

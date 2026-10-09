@@ -2,6 +2,13 @@ import type { LetterColorPreset } from '../types';
 
 export const COLOR_PRESETS: LetterColorPreset[] = [
   {
+    id: 'cyber-emerald',
+    name: 'Cyber Emerald (Trubik)',
+    gradient: ['#34d399', '#059669'],
+    glow: 'rgba(52, 211, 153, 0.6)',
+    border: '#065f46',
+  },
+  {
     id: 'pink-balloon',
     name: 'Pink Pop (как на фото)',
     gradient: ['#ff3b88', '#c01968'],
@@ -68,7 +75,8 @@ export const FONT_PRESETS = [
 ];
 
 export const SHAPE_PRESETS = [
-  { id: 'emoji-look-up', name: 'Смайлик (Глаза вверх)', icon: '👀', desc: 'Смотрит на букву на лбу' },
+  { id: 'omnom', name: 'Ам Ням (Om Nom)', icon: '🟢', desc: 'Фирменный милый маскот' },
+  { id: 'emoji-look-up', name: 'Смайлик (Глаза вверх)', icon: '👀', desc: 'Классический трендовый смайл' },
   { id: 'emoji-cool', name: 'Крутой смайл', icon: '😎', desc: 'В очках с короной' },
   { id: 'heart', name: 'Глянцевое Сердце', icon: '❤️', desc: '3D рубиновое сердце' },
   { id: 'fire', name: 'Огонь / Пламя', icon: '🔥', desc: 'Яркий горящий огонек' },
@@ -81,7 +89,7 @@ export const SHAPE_PRESETS = [
 
 export const ANIMATION_PRESETS = [
   { id: 'sparkle', name: 'Сверкающий блик ✨', desc: 'Яркая звезда скользит по букве с искрами' },
-  { id: 'drip', name: 'Стекающие капли 💧', desc: 'Жидкие капли стекают с буквы вниз на лоб' },
+  { id: 'drip', name: 'Стекающие капли 💧', desc: 'Жидкие капли стекают с буквы вниз' },
   { id: 'pulse', name: 'Неоновое дыхание 💓', desc: 'Мягкая пульсация масштаба и свечения' },
   { id: 'float', name: 'Плавное парение 🪂', desc: 'Мягкое покачивание вверх и вниз' },
   { id: 'wobble', name: 'Пружинистый отскок 🤹', desc: 'Динамичное упругое подпрыгивание' },

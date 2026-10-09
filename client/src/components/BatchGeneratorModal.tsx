@@ -59,13 +59,17 @@ export const BatchGeneratorModal: React.FC<Props> = ({ isOpen, onClose, baseConf
       });
 
       setProgress(Math.round(((i + 1) / chars.length) * 100));
-      // Give UI time to update
       await new Promise((r) => setTimeout(r, 15));
     }
 
     setGeneratedItems(results);
     setIsGenerating(false);
-    confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+    confetti({
+      particleCount: 65,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#34d399', '#38bdf8', '#fbbf24'],
+    });
     haptic.success();
   };
 
@@ -95,132 +99,127 @@ export const BatchGeneratorModal: React.FC<Props> = ({ isOpen, onClose, baseConf
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-      <div className="w-full max-w-md max-h-[90vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div className="w-full max-w-sm max-h-[85vh] bento-card cyber-frame bg-[#0d1017] border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        {/* Modal Header */}
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-              <Sparkles size={16} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">Пакетный генератор алфавита</h3>
-              <p className="text-[11px] text-slate-400">Создать полный пак в едином стиле</p>
-            </div>
+            <Sparkles size={16} className="text-[#34d399]" />
+            <h2 className="text-sm font-bold text-white font-mono-code uppercase tracking-wider">
+              Пакетный генератор
+            </h2>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            onClick={() => { haptic.light(); onClose(); }}
+            className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Content */}
+        {/* Modal Body */}
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
           {/* Alphabet Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Набор символов</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="text-[10px] text-slate-400 font-mono-code uppercase">Выбор набора</label>
+            <div className="grid grid-cols-3 gap-1.5">
               {[
-                { id: 'RU', name: 'Русский (А-Я)', count: '28 букв' },
-                { id: 'EN', name: 'English (A-Z)', count: '26 букв' },
-                { id: 'NUM', name: 'Цифры (0-9)', count: '10 цифр' },
-              ].map((item) => (
+                { id: 'RU', label: 'Русский (А-Я)' },
+                { id: 'EN', label: 'English (A-Z)' },
+                { id: 'NUM', label: 'Цифры (0-9)' },
+              ].map((set) => (
                 <button
-                  key={item.id}
-                  onClick={() => { haptic.selection(); setSelectedSet(item.id as any); }}
-                  className={`p-2 rounded-xl border text-center transition-all ${
-                    selectedSet === item.id
-                      ? 'bg-sky-950/80 border-sky-500 text-white font-bold'
-                      : 'bg-slate-800/60 border-slate-750 text-slate-400'
+                  key={set.id}
+                  onClick={() => { haptic.selection(); setSelectedSet(set.id as any); }}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold font-mono-code border transition-all ${
+                    selectedSet === set.id
+                      ? 'bg-[#34d399] text-black border-[#34d399]'
+                      : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'
                   }`}
                 >
-                  <div className="text-xs">{item.name}</div>
-                  <div className="text-[10px] text-slate-400">{item.count}</div>
+                  {set.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Resolution Mode */}
+          {/* Resolution Selection */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Формат Telegram</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="text-[10px] text-slate-400 font-mono-code uppercase">Формат экспорта</label>
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => { haptic.selection(); setResolution(100); }}
-                className={`p-2 rounded-xl border text-center transition-all ${
+                className={`py-2 px-2 rounded-xl text-xs font-medium border font-mono-code transition-all ${
                   resolution === 100
-                    ? 'bg-sky-950/80 border-sky-500 text-white font-bold'
-                    : 'bg-slate-800/60 border-slate-750 text-slate-400'
+                    ? 'bg-[#34d399]/20 text-[#34d399] border-[#34d399]'
+                    : 'bg-white/5 text-slate-400 border-white/5'
                 }`}
               >
-                <div className="text-xs">Custom Emoji</div>
-                <div className="text-[10px] text-slate-400">100×100 px (в текст)</div>
+                100×100 px (Custom Emoji)
               </button>
+
               <button
                 onClick={() => { haptic.selection(); setResolution(512); }}
-                className={`p-2 rounded-xl border text-center transition-all ${
+                className={`py-2 px-2 rounded-xl text-xs font-medium border font-mono-code transition-all ${
                   resolution === 512
-                    ? 'bg-sky-950/80 border-sky-500 text-white font-bold'
-                    : 'bg-slate-800/60 border-slate-750 text-slate-400'
+                    ? 'bg-[#34d399]/20 text-[#34d399] border-[#34d399]'
+                    : 'bg-white/5 text-slate-400 border-white/5'
                 }`}
               >
-                <div className="text-xs">Sticker Pack</div>
-                <div className="text-[10px] text-slate-400">512×512 px (стикеры)</div>
+                512×512 px (Stickers)
               </button>
             </div>
           </div>
 
-          {/* Action Trigger */}
+          {/* Action Button */}
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20 active:scale-95 transition-all"
+            className="w-full py-2.5 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 bg-[#34d399] text-black shadow-lg shadow-[#34d399]/20 active:scale-[0.98] transition-all"
           >
             {isGenerating ? (
               <>
-                <Loader2 size={15} className="animate-spin" />
-                <span>Генерация {progress}%...</span>
+                <Loader2 size={14} className="animate-spin" />
+                <span className="font-mono-code">Генерация... {progress}%</span>
               </>
             ) : (
               <>
-                <Sparkles size={15} />
-                <span>Сгенерировать алфавит</span>
+                <Sparkles size={14} />
+                <span>Сгенерировать все {ALPHABETS[selectedSet].length} шт</span>
               </>
             )}
           </button>
 
-          {/* Progress or Results Grid */}
+          {/* Generated Grid Preview */}
           {generatedItems.length > 0 && (
             <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
-                  <CheckCircle size={14} />
-                  <span>Сгенерировано {generatedItems.length} эмодзи</span>
+              <div className="flex items-center justify-between text-xs text-slate-300">
+                <span className="flex items-center gap-1 font-mono-code text-[#34d399]">
+                  <CheckCircle size={13} />
+                  Готово ({generatedItems.length} шт)
                 </span>
-                <button
-                  onClick={handleDownloadZip}
-                  className="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all active:scale-95"
-                >
-                  <Download size={13} />
-                  <span>Скачать все в ZIP</span>
-                </button>
               </div>
 
-              {/* Thumbnail Gallery */}
-              <div className="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-950/70 rounded-2xl border border-slate-800">
+              <div className="grid grid-cols-6 gap-1 p-2 rounded-xl bg-black/40 border border-white/5 max-h-36 overflow-y-auto">
                 {generatedItems.map((item) => (
-                  <div
-                    key={item.char}
-                    className="flex flex-col items-center justify-center p-1 rounded-lg bg-slate-900 border border-slate-800 group hover:border-sky-500 transition-colors"
-                  >
-                    <img src={item.dataUrl} alt={item.char} className="w-10 h-10 object-contain" />
-                    <span className="text-[10px] font-mono text-slate-400 mt-0.5">{item.char}</span>
+                  <div key={item.char} className="p-1 rounded bg-white/5 flex items-center justify-center">
+                    <img src={item.dataUrl} alt={item.char} className="w-6 h-6 object-contain" />
                   </div>
                 ))}
               </div>
+
+              <button
+                onClick={handleDownloadZip}
+                className="w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-[#059669] to-[#10b981] text-black shadow-md shadow-[#10b981]/20 active:scale-[0.98] transition-all"
+              >
+                <Download size={14} />
+                <span>Скачать пак в ZIP-архиве</span>
+              </button>
             </div>
           )}
         </div>

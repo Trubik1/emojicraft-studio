@@ -13,7 +13,7 @@ interface Props {
 export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchModal }) => {
   const { haptic } = useTelegram();
 
-  const QUICK_CHARS = ['S', 'A', 'M', 'V', 'K', 'D', '7', '👑', '🔥', '❤️'];
+  const QUICK_CHARS = ['S', 'А', 'M', 'Я', '🍬', '👑', '🔥', '💎', '⭐', '7'];
 
   const setConfig = (partial: Partial<EmojiConfig>) => {
     haptic.selection();
@@ -21,22 +21,27 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto space-y-5 pb-12">
+    <div className="w-full max-w-sm mx-auto space-y-4 pb-12">
       
       {/* 1. Character & Text Input */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-lg space-y-3">
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Type size={14} className="text-sky-400" />
+          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+            <Type size={13} className="text-[#34d399]" />
             <span>Символ / Буква</span>
           </label>
 
           <button
             onClick={() => { haptic.medium(); onOpenBatchModal(); }}
-            className="text-[11px] font-bold text-sky-400 bg-sky-950/80 hover:bg-sky-900/80 border border-sky-800/80 px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors"
+            className="text-[11px] font-bold text-[#34d399] bg-[#34d399]/10 hover:bg-[#34d399]/20 border border-[#34d399]/30 px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors"
           >
             <Sparkles size={11} />
-            <span>Пакетный алфавит А-Я</span>
+            <span>Алфавит А-Я</span>
           </button>
         </div>
 
@@ -47,7 +52,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
             value={config.character}
             onChange={(e) => setConfig({ character: e.target.value.toUpperCase() })}
             placeholder="S"
-            className="w-16 h-12 text-center text-2xl font-black rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-500 transition-colors"
+            className="w-14 h-11 text-center text-2xl font-black rounded-xl bg-[#090b10] border border-white/10 text-white focus:outline-none focus:border-[#34d399] transition-colors"
           />
 
           {/* Quick preset chips */}
@@ -56,10 +61,10 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
               <button
                 key={char}
                 onClick={() => setConfig({ character: char })}
-                className={`min-w-9 h-9 px-2 rounded-lg font-bold text-sm transition-all ${
+                className={`min-w-8 h-8 px-2 rounded-lg font-bold text-xs transition-all ${
                   config.character === char
-                    ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30 scale-105'
-                    : 'bg-slate-800/80 text-slate-300 hover:bg-slate-750 border border-slate-700/60'
+                    ? 'bg-[#34d399] text-black shadow-md shadow-[#34d399]/30 scale-105'
+                    : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/5'
                 }`}
               >
                 {char}
@@ -69,38 +74,51 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
         </div>
       </div>
 
-      {/* 2. Base Shape Picker */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-lg space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-          <Layers size={14} className="text-pink-400" />
-          <span>Базовая форма</span>
+      {/* 2. Base Shape Picker (With Om Nom!) */}
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+          <Layers size={13} className="text-[#38bdf8]" />
+          <span>Базовый персонаж / Форма</span>
         </label>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {SHAPE_PRESETS.map((shape) => {
             const isSelected = config.baseShape === shape.id;
             return (
               <button
                 key={shape.id}
                 onClick={() => setConfig({ baseShape: shape.id as BaseShape })}
-                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all text-center ${
+                className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all ${
                   isSelected
-                    ? 'bg-gradient-to-b from-sky-950/80 to-slate-900 border-sky-500 text-white shadow-md'
-                    : 'bg-slate-800/60 border-slate-750 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    ? 'bg-[#34d399]/15 border-[#34d399] text-white shadow-sm'
+                    : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="text-2xl mb-1">{shape.icon}</span>
-                <span className="text-[11px] font-semibold truncate w-full">{shape.name}</span>
+                <span className="text-xl shrink-0">{shape.icon}</span>
+                <div className="truncate min-w-0">
+                  <div className="text-[11px] font-bold truncate text-white">{shape.name}</div>
+                  <div className="text-[9px] text-slate-400 truncate">{shape.desc}</div>
+                </div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 3. Animation Selector */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-lg space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-          <Sparkles size={14} className="text-amber-400" />
+      {/* 3. Animation Effects */}
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+          <Sparkles size={13} className="text-[#fbbf24]" />
           <span>Анимационный эффект</span>
         </label>
 
@@ -111,50 +129,54 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
               <button
                 key={anim.id}
                 onClick={() => setConfig({ animationType: anim.id as AnimationType })}
-                className={`flex flex-col text-left p-2.5 rounded-xl border transition-all ${
+                className={`p-2.5 rounded-xl border text-left transition-all ${
                   isSelected
-                    ? 'bg-sky-950/70 border-sky-500 text-white shadow-md'
-                    : 'bg-slate-800/60 border-slate-750 text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#34d399]/15 border-[#34d399] text-white shadow-sm'
+                    : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="text-xs font-bold text-slate-100">{anim.name}</span>
-                <span className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{anim.desc}</span>
+                <div className="text-[11px] font-bold text-white">{anim.name}</div>
+                <div className="text-[9px] text-slate-400 mt-0.5 line-clamp-1">{anim.desc}</div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 4. Color & Texture Presets */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-lg space-y-3">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-          <Palette size={14} className="text-emerald-400" />
-          <span>Стиль и цвет буквы</span>
+      {/* 4. Color & Shader Preset */}
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+          <Palette size={13} className="text-[#c084fc]" />
+          <span>Цветовая палитра 3D Глянца</span>
         </label>
 
-        <div className="grid grid-cols-4 gap-2">
-          {COLOR_PRESETS.map((preset) => {
-            const isSelected = config.colorPresetId === preset.id;
+        <div className="grid grid-cols-3 gap-2">
+          {COLOR_PRESETS.map((color) => {
+            const isSelected = config.colorPresetId === color.id;
             return (
               <button
-                key={preset.id}
-                onClick={() => setConfig({ colorPresetId: preset.id })}
-                className={`group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                key={color.id}
+                onClick={() => setConfig({ colorPresetId: color.id })}
+                className={`flex flex-col items-center p-2 rounded-xl border transition-all ${
                   isSelected
-                    ? 'bg-slate-800 border-sky-400 ring-2 ring-sky-400/30'
-                    : 'bg-slate-800/40 border-slate-750 hover:bg-slate-800'
+                    ? 'border-[#34d399] bg-[#34d399]/10 shadow-sm'
+                    : 'border-white/5 bg-white/[0.02] hover:bg-white/5'
                 }`}
-                title={preset.name}
               >
                 <div
-                  className="w-8 h-8 rounded-full border border-white/20 shadow-inner transition-transform group-hover:scale-105"
+                  className="w-8 h-8 rounded-full mb-1.5 shadow-md flex items-center justify-center border border-white/20"
                   style={{
-                    background: `linear-gradient(135deg, ${preset.gradient[0]}, ${preset.gradient[1]})`,
-                    boxShadow: `0 0 10px ${preset.glow}`,
+                    background: `linear-gradient(135deg, ${color.gradient[0]}, ${color.gradient[1]})`,
+                    boxShadow: isSelected ? `0 0 12px ${color.glow}` : 'none',
                   }}
                 />
-                <span className="text-[9px] font-medium text-slate-400 truncate w-full text-center">
-                  {preset.name.split(' ')[0]}
+                <span className="text-[10px] font-medium text-slate-300 truncate w-full text-center">
+                  {color.name}
                 </span>
               </button>
             );
@@ -162,39 +184,76 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
         </div>
       </div>
 
-      {/* 5. Typography & Fine-Tuning */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-lg space-y-3.5">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-          <Sliders size={14} className="text-indigo-400" />
-          <span>Тонкая настройка</span>
+      {/* 5. Toggles & Sliders */}
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+          <Sliders size={13} className="text-[#34d399]" />
+          <span>Тонкая настройка эффектов</span>
         </label>
 
-        {/* Font selection */}
-        <div>
-          <span className="text-[11px] text-slate-400 font-medium block mb-1.5">Шрифт</span>
-          <div className="grid grid-cols-2 gap-1.5">
-            {FONT_PRESETS.map((f) => (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setConfig({ hasDrip: !config.hasDrip })}
+            className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs ${
+              config.hasDrip
+                ? 'bg-[#34d399]/15 border-[#34d399] text-white'
+                : 'bg-white/[0.03] border-white/5 text-slate-400'
+            }`}
+          >
+            <span className="flex items-center gap-1.5 font-medium">
+              <Droplets size={13} />
+              Капли (Drip)
+            </span>
+            <span className="font-mono-code text-[10px] font-bold">{config.hasDrip ? 'ВКЛ' : 'ВЫКЛ'}</span>
+          </button>
+
+          <button
+            onClick={() => setConfig({ hasGlow: !config.hasGlow })}
+            className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs ${
+              config.hasGlow
+                ? 'bg-[#34d399]/15 border-[#34d399] text-white'
+                : 'bg-white/[0.03] border-white/5 text-slate-400'
+            }`}
+          >
+            <span className="flex items-center gap-1.5 font-medium">
+              <Sparkles size={13} />
+              Неон аура
+            </span>
+            <span className="font-mono-code text-[10px] font-bold">{config.hasGlow ? 'ВКЛ' : 'ВЫКЛ'}</span>
+          </button>
+        </div>
+
+        {/* Font Family selector */}
+        <div className="pt-2">
+          <div className="text-[10px] text-slate-400 mb-1 font-mono-code uppercase">Шрифт буквы</div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {FONT_PRESETS.map((font) => (
               <button
-                key={f.id}
-                onClick={() => setConfig({ fontFamily: f.id })}
-                className={`py-1.5 px-2.5 rounded-lg text-xs font-bold border truncate transition-all ${
-                  config.fontFamily === f.id
-                    ? 'bg-indigo-950/80 border-indigo-500 text-white'
-                    : 'bg-slate-800/60 border-slate-750 text-slate-400 hover:text-slate-200'
+                key={font.id}
+                onClick={() => setConfig({ fontFamily: font.id })}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  config.fontFamily === font.id
+                    ? 'bg-[#34d399] text-black font-bold'
+                    : 'bg-white/5 text-slate-300 border border-white/5 hover:bg-white/10'
                 }`}
-                style={{ fontFamily: f.css }}
+                style={{ fontFamily: font.css }}
               >
-                {f.name}
+                {font.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Sliders: Size & Rotation */}
-        <div className="space-y-2 pt-1">
-          <div className="flex justify-between text-xs text-slate-400">
+        {/* Size Slider */}
+        <div className="space-y-1 pt-1">
+          <div className="flex justify-between text-[10px] font-mono-code text-slate-400">
             <span>Размер буквы</span>
-            <span className="font-mono text-slate-300">{config.fontSize}%</span>
+            <span className="text-[#34d399]">{config.fontSize}%</span>
           </div>
           <input
             type="range"
@@ -202,65 +261,27 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
             max={140}
             value={config.fontSize}
             onChange={(e) => setConfig({ fontSize: Number(e.target.value) })}
-            className="w-full accent-sky-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+            className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
           />
+        </div>
 
-          <div className="flex justify-between text-xs text-slate-400 pt-1">
+        {/* Rotation Slider */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px] font-mono-code text-slate-400">
             <span>Наклон буквы</span>
-            <span className="font-mono text-slate-300">{config.letterRotation}°</span>
+            <span className="text-[#34d399]">{config.letterRotation}°</span>
           </div>
           <input
             type="range"
-            min={-30}
-            max={30}
+            min={-35}
+            max={35}
             value={config.letterRotation}
             onChange={(e) => setConfig({ letterRotation: Number(e.target.value) })}
-            className="w-full accent-sky-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+            className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
           />
         </div>
-
-        {/* Effect Toggles */}
-        <div className="pt-2 border-t border-slate-800/80 space-y-2">
-          <label className="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
-            <span className="flex items-center gap-1.5">
-              <Droplets size={13} className="text-pink-400" />
-              <span>Стекающие капли (Drip)</span>
-            </span>
-            <input
-              type="checkbox"
-              checked={config.hasDrip}
-              onChange={(e) => setConfig({ hasDrip: e.target.checked })}
-              className="w-4 h-4 rounded accent-sky-500"
-            />
-          </label>
-
-          <label className="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
-            <span className="flex items-center gap-1.5">
-              <Sparkles size={13} className="text-amber-400" />
-              <span>3D Шариковый глянец (Bevel)</span>
-            </span>
-            <input
-              type="checkbox"
-              checked={config.hasGlossyBevel}
-              onChange={(e) => setConfig({ hasGlossyBevel: e.target.checked })}
-              className="w-4 h-4 rounded accent-sky-500"
-            />
-          </label>
-
-          <label className="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
-            <span className="flex items-center gap-1.5">
-              <Sparkles size={13} className="text-cyan-400" />
-              <span>Неоновое свечение (Aura)</span>
-            </span>
-            <input
-              type="checkbox"
-              checked={config.hasGlow}
-              onChange={(e) => setConfig({ hasGlow: e.target.checked })}
-              className="w-4 h-4 rounded accent-sky-500"
-            />
-          </label>
-        </div>
       </div>
+
     </div>
   );
 };

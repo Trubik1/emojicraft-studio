@@ -1,21 +1,22 @@
 export type BaseShape = 
-  | 'emoji-look-up' // The classic yellow emoji looking up at its forehead (from screenshot)
-  | 'emoji-cool'    // Sunglasses face
-  | 'heart'         // Glossy heart
-  | 'fire'          // Flame
-  | 'diamond'       // Gemstone
-  | 'star'          // Golden star
-  | 'shield'        // Hero shield badge
-  | 'skull'         // Cool gamer skull
-  | 'crown';        // Royal crown
+  | 'omnom'         // Ам Ням (Om Nom) фирменный маскот!
+  | 'emoji-look-up' // Классический смайлик с глазами вверх
+  | 'emoji-cool'    // Крутой смайл в очках
+  | 'heart'         // 3D глянцевое сердце
+  | 'fire'          // Огонь / пламя
+  | 'diamond'       // Алмаз / кристалл
+  | 'star'          // Золотая звезда
+  | 'crown'         // Корона Премиум
+  | 'shield'        // Герб / щит
+  | 'skull';        // Арт-череп
 
 export type AnimationType = 
-  | 'none'          // Static 
-  | 'sparkle'       // Gleam & sparkle light travelling (like screenshot 1)
-  | 'drip'          // Melting drip paint (like screenshot 2)
-  | 'pulse'         // Neon breathing & glow
-  | 'float'         // Gentle floating bob
-  | 'wobble';       // Playful bounce & wobble
+  | 'none'          // Статичный
+  | 'sparkle'       // Сверкающий блик и искры
+  | 'drip'          // Стекающие капли краски
+  | 'pulse'         // Неоновое дыхание
+  | 'float'         // Плавное парение
+  | 'wobble';       // Пружинистый отскок
 
 export type LetterColorPreset = {
   id: string;
@@ -29,7 +30,7 @@ export interface EmojiConfig {
   baseShape: BaseShape;
   character: string;
   fontFamily: string;
-  fontSize: number; // relative scale 50..150
+  fontSize: number; // 50..150
   letterOffsetX: number; // -50..50
   letterOffsetY: number; // -50..50
   letterRotation: number; // -30..30
@@ -40,6 +41,15 @@ export interface EmojiConfig {
   hasGlow: boolean;
   hasGlossyBevel: boolean;
   sizeMode: 'emoji' | 'sticker'; // 100x100 or 512x512
+}
+
+export interface SavedEmoji {
+  id: string;
+  createdAt: number;
+  character: string;
+  baseShape: BaseShape;
+  previewUrl: string;
+  config: EmojiConfig;
 }
 
 export interface SliceGridConfig {
