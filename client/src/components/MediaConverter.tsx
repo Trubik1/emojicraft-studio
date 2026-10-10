@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTelegram } from '../hooks/useTelegram';
-import { recordAnimatedWebm, downloadDataUrl, isVideoRecordingSupported } from '../utils/exporter';
+import { recordAnimatedWebm, downloadDataUrl, isVideoRecordingSupported, copyPngToClipboard } from '../utils/exporter';
 import { CyberText } from './CyberText';
 import confetti from 'canvas-confetti';
-import { Upload, Film, Type, Sliders, Sparkles, Download, AlertCircle, RotateCcw } from 'lucide-react';
+import { Upload, Film, Type, Sliders, Sparkles, Download, AlertCircle, RotateCcw, Copy, Check, X } from 'lucide-react';
 
 const MEME_PRESETS = [
   { top: 'ШОК', bottom: 'КОГДА СДЕЛАЛ СТИКЕР' },
@@ -42,6 +42,8 @@ export const MediaConverter: React.FC = () => {
   const resolution = 512;
   const [isRecording, setIsRecording] = useState(false);
   const [recordProgress, setRecordProgress] = useState(0);
+  const [exportModalSrc, setExportModalSrc] = useState<string | null>(null);
+  const [copiedModal, setCopiedModal] = useState(false);
   const [iosWarning, setIosWarning] = useState<string | null>(null);
 
   // Preload Om Nom badge
@@ -217,13 +219,17 @@ export const MediaConverter: React.FC = () => {
     return () => cancelAnimationFrame(animId);
   }, [mediaType, topText, bottomText, hasWhiteBorder, mediaScale, panX, panY, selectedBadge]);
 
-  // Export Static PNG Sticker
+  // Export Static PNG Sticker (Always opens Modal for guaranteed save on mobile!)
   const handleExportPng = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     haptic.medium();
     const dataUrl = canvas.toDataURL('image/png');
+    
+    // Download and open modal
     downloadDataUrl(dataUrl, `meme_sticker_512x512_${Date.now()}.png`);
+    setExportModalSrc(dataUrl);
+
     confetti({
       particleCount: 45,
       spread: 60,
@@ -235,11 +241,17 @@ export const MediaConverter: React.FC = () => {
 
   // Export WebM Video Sticker (Telegram 512x512 standard, max 3s)
   const handleExportWebm = async () => {
-    if (!canvasRef.current || isRecording) return;
+    const canvas = canvasRef.current;
+    if (!canvas || isRecording) return;
+
+    // Immediately create a snapshot PNG in case WebM is unsupported or blocked by Telegram Webview
+    const snapshotUrl = canvas.toDataURL('image/png');
 
     if (!isVideoRecordingSupported()) {
       haptic.warning();
-      setIosWarning('Запись WebM видео не поддерживается этим Webview. Скачайте четкий PNG 512×512!');
+      downloadDataUrl(snapshotUrl, `telegram_sticker_${Date.now()}.png`);
+      setExportModalSrc(snapshotUrl);
+      setIosWarning('В этом Webview нет записи VP9 WebM. Стикер сгенерирован в PNG 512×512!');
       return;
     }
 
@@ -254,18 +266,15 @@ export const MediaConverter: React.FC = () => {
 
     try {
       const duration = 2.8; // strict Telegram limit < 3 sec
-      const blob = await recordAnimatedWebm(canvasRef.current, duration, (p) => {
+      const blob = await recordAnimatedWebm(canvas, duration, (p) => {
         setRecordProgress(p);
       });
 
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `telegram_sticker_${Date.now()}.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadDataUrl(url, `telegram_sticker_${Date.now()}.webm`);
+      
+      // Also open the modal with the snapshot image for mobile long-press
+      setExportModalSrc(snapshotUrl);
 
       confetti({
         particleCount: 70,
@@ -277,7 +286,9 @@ export const MediaConverter: React.FC = () => {
     } catch (err) {
       console.warn('Recording error fallback', err);
       haptic.warning();
-      setIosWarning('Не удалось завершить видеозапись. Скачайте PNG 512×512!');
+      downloadDataUrl(snapshotUrl, `telegram_sticker_${Date.now()}.png`);
+      setExportModalSrc(snapshotUrl);
+      setIosWarning('Запись видео ограничена браузером. Открыт стикер PNG 512×512!');
     } finally {
       setIsRecording(false);
       setRecordProgress(0);
@@ -393,10 +404,10 @@ export const MediaConverter: React.FC = () => {
 
           <button
             onClick={handleExportPng}
-            className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-all"
+            className="w-full py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
           >
             <Download size={13} className="text-[#34d399]" />
-            <span>Скачать статичный PNG 512×512</span>
+            <span>Скачать / Сохранить PNG 512×512</span>
           </button>
         </div>
       </div>
@@ -423,7 +434,7 @@ export const MediaConverter: React.FC = () => {
                 setTopText(p.top);
                 setBottomText(p.bottom);
               }}
-              className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/10 border border-white/5 text-left transition-all"
+              className="p-2 rounded-lg bg-white/[0.03] hover:bg-white/10 border border-white/5 text-left transition-all"
             >
               <div className="text-[10px] font-bold text-[#34d399] font-mono-code">{p.top}</div>
               <div className="text-[9px] text-slate-400 truncate">{p.bottom}</div>
@@ -602,6 +613,62 @@ export const MediaConverter: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Fallback & Result Modal for 100% reliable mobile saving */}
+      {exportModalSrc && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bento-card cyber-frame max-w-xs w-full p-4 space-y-3 relative text-center">
+            <button
+              onClick={() => setExportModalSrc(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+            <h3 className="text-sm font-bold text-white font-mono-code">Ваш стикер готов!</h3>
+            <p className="text-[11px] text-slate-400">
+              Зажмите картинку пальцем, чтобы сохранить в галерею или скопируйте:
+            </p>
+            <div className="p-3 bg-[#090b10] rounded-xl flex justify-center border border-white/5">
+              <img src={exportModalSrc} alt="Sticker result" className="w-40 h-40 object-contain rounded-lg" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={async () => {
+                  haptic.selection();
+                  if (exportModalSrc) {
+                    const ok = await copyPngToClipboard(exportModalSrc);
+                    if (ok) {
+                      setCopiedModal(true);
+                      setTimeout(() => setCopiedModal(false), 2000);
+                      haptic.success();
+                    }
+                  }
+                }}
+                className={`py-2 rounded-xl border font-bold text-xs flex items-center justify-center gap-1 transition-all ${
+                  copiedModal
+                    ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
+                    : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
+                }`}
+              >
+                {copiedModal ? <Check size={12} /> : <Copy size={12} />}
+                <span>{copiedModal ? 'Скопировано!' : 'Копировать'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (exportModalSrc) {
+                    downloadDataUrl(exportModalSrc, `meme_sticker_512x512_${Date.now()}.png`);
+                  }
+                  setExportModalSrc(null);
+                }}
+                className="py-2 rounded-xl bg-[#34d399] text-black font-extrabold text-xs flex items-center justify-center gap-1"
+              >
+                <Download size={12} />
+                <span>Скачать PNG</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
