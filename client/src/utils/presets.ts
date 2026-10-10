@@ -10,7 +10,7 @@ export const COLOR_PRESETS: LetterColorPreset[] = [
   },
   {
     id: 'pink-balloon',
-    name: 'Pink Pop (как на фото)',
+    name: 'Pink Pop Balloon',
     gradient: ['#ff3b88', '#c01968'],
     glow: 'rgba(255, 60, 140, 0.6)',
     border: '#7a063d',
@@ -31,7 +31,7 @@ export const COLOR_PRESETS: LetterColorPreset[] = [
   },
   {
     id: 'toxic-lime',
-    name: 'Acid Lime',
+    name: 'Acid Lime Glow',
     gradient: ['#adff2f', '#00c853'],
     glow: 'rgba(173, 255, 47, 0.6)',
     border: '#006429',
@@ -68,30 +68,34 @@ export const COLOR_PRESETS: LetterColorPreset[] = [
 
 export const FONT_PRESETS = [
   { id: 'Fredoka', name: 'Fredoka Bubble', css: "'Fredoka', cursive" },
+  { id: 'Manrope', name: 'Manrope Cyber', css: "'Manrope', sans-serif" },
+  { id: 'JetBrains Mono', name: 'JetBrains Code', css: "'JetBrains Mono', monospace" },
   { id: 'Rubik', name: 'Rubik Bold 3D', css: "'Rubik', sans-serif" },
   { id: 'Impact', name: 'Meme Impact', css: "Impact, sans-serif" },
-  { id: 'Press Start 2P', name: 'Retro Pixel 8-Bit', css: "'Press Start 2P', monospace" },
-  { id: 'Plus Jakarta Sans', name: 'Modern Clean', css: "'Plus Jakarta Sans', sans-serif" },
 ];
 
 export const SHAPE_PRESETS = [
-  { id: 'omnom', name: 'Ам Ням (Om Nom)', icon: '🟢', desc: 'Фирменный милый маскот' },
-  { id: 'emoji-look-up', name: 'Смайлик (Глаза вверх)', icon: '👀', desc: 'Классический трендовый смайл' },
-  { id: 'emoji-cool', name: 'Крутой смайл', icon: '😎', desc: 'В очках с короной' },
-  { id: 'heart', name: 'Глянцевое Сердце', icon: '❤️', desc: '3D рубиновое сердце' },
-  { id: 'fire', name: 'Огонь / Пламя', icon: '🔥', desc: 'Яркий горящий огонек' },
-  { id: 'diamond', name: 'Алмаз / Кристалл', icon: '💎', desc: 'Ограненный драгоценный камень' },
-  { id: 'star', name: 'Золотая Звезда', icon: '⭐', desc: 'Сияющая звезда' },
-  { id: 'shield', name: 'Герб / Щит', icon: '🛡️', desc: 'Рыцарский бейдж' },
-  { id: 'crown', name: 'Корона Премиум', icon: '👑', desc: 'Королевский статус' },
-  { id: 'skull', name: 'Геймерский Череп', icon: '💀', desc: 'Стильный арт-череп' },
+  { id: 'omnom', name: 'Ам Ням (Классик)', icon: '🟢', sprite: '/omnom/amnumya_010.webp', desc: 'Иконический #10 из КАРТОЧКИ' },
+  { id: 'omnom-candy', name: 'Ам Ням с конфетой', icon: '🍬', sprite: '/omnom/omnom-candy.webp', desc: 'Держит вкусный леденец' },
+  { id: 'omnom-eating', name: 'Ам Ням кушает', icon: '😋', sprite: '/omnom/omnom-eating.webp', desc: 'Открыл рот для сладостей' },
+  { id: 'omnom-super', name: 'Супер Ам Ням', icon: '🦸', sprite: '/omnom/omnom-super.webp', desc: 'В супергеройском плаще' },
+  { id: 'omnom-happy', name: 'Ам Ням радостный', icon: '✨', sprite: '/omnom/omnom-happy.webp', desc: 'Сияет от счастья' },
+  { id: 'omnom-jump', name: 'Ам Ням в прыжке', icon: '🤹', sprite: '/omnom/omnom-jump.webp', desc: 'Динамичный прыжок вверх' },
+  { id: 'omnom-cake', name: 'Ам Ням с тортом', icon: '🎂', sprite: '/omnom/omnom-cake.webp', desc: 'Праздничный торт' },
+  { id: 'emoji-look-up', name: 'Смайлик (Глаза вверх)', icon: '👀', sprite: null, desc: '3D смайлик смотрит на букву' },
+  { id: 'emoji-cool', name: 'Крутой смайл', icon: '😎', sprite: null, desc: 'В очках с короной' },
+  { id: 'heart', name: 'Глянцевое Сердце', icon: '❤️', sprite: null, desc: '3D рубиновое сердце' },
+  { id: 'fire', name: 'Огонь / Пламя', icon: '🔥', sprite: null, desc: 'Яркий горящий огонек' },
+  { id: 'diamond', name: 'Алмаз / Кристалл', icon: '💎', sprite: null, desc: 'Ограненный кристалл' },
+  { id: 'star', name: 'Золотая Звезда', icon: '⭐', sprite: null, desc: 'Сияющая золотая звезда' },
+  { id: 'crown', name: 'Корона Премиум', icon: '👑', sprite: null, desc: 'Королевский VIP статус' },
 ];
 
 export const ANIMATION_PRESETS = [
-  { id: 'sparkle', name: 'Сверкающий блик ✨', desc: 'Яркая звезда скользит по букве с искрами' },
-  { id: 'drip', name: 'Стекающие капли 💧', desc: 'Жидкие капли стекают с буквы вниз' },
-  { id: 'pulse', name: 'Неоновое дыхание 💓', desc: 'Мягкая пульсация масштаба и свечения' },
-  { id: 'float', name: 'Плавное парение 🪂', desc: 'Мягкое покачивание вверх и вниз' },
-  { id: 'wobble', name: 'Пружинистый отскок 🤹', desc: 'Динамичное упругое подпрыгивание' },
-  { id: 'none', name: 'Статичный', desc: 'Без анимации (для обычных эмодзи)' },
+  { id: 'sparkle', name: 'Сверкающий блик ✨', desc: 'Звездный блик скользит по букве с искрами' },
+  { id: 'drip', name: 'Стекающие капли 💧', desc: 'Жидкие капли краски медленно стекают вниз' },
+  { id: 'pulse', name: 'Неоновое дыхание 💓', desc: 'Мягкая пульсация масштаба и ауры' },
+  { id: 'float', name: 'Плавное парение 🪂', desc: 'Мягкое покачивание в невесомости' },
+  { id: 'wobble', name: 'Пружинистый отскок 🤹', desc: 'Упругое подпрыгивание персонажа' },
+  { id: 'none', name: 'Статичный', desc: 'Без движения (для классических эмодзи)' },
 ];

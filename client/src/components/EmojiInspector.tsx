@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTelegram } from '../hooks/useTelegram';
+import { CyberText } from './CyberText';
 import { Search, Code2, Copy, Check, ExternalLink } from 'lucide-react';
 
 interface CustomEmojiData {
@@ -38,10 +39,18 @@ const SAMPLE_EMOJIS: CustomEmojiData[] = [
   },
   {
     id: '5213458920198421033',
-    name: 'Liquid Pink Balloon (S) 💖',
+    name: 'Pink Pop Balloon (S) 💖',
     packName: 'LetterGlow_Faces',
     packUrl: 'https://t.me/addemoji/LetterGlow_Faces',
     previewChar: '💖',
+    format: 'WEBM (Animated)',
+  },
+  {
+    id: '5409384729103847192',
+    name: 'Cyber Emerald Mascot 🟢',
+    packName: 'OmNom_Trubik_Cyber',
+    packUrl: 'https://t.me/addemoji/OmNom_Cyber',
+    previewChar: '🟢',
     format: 'WEBM (Animated)',
   },
 ];
@@ -103,7 +112,7 @@ export const EmojiInspector: React.FC = () => {
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
             <Search size={13} className="text-[#34d399]" />
-            <span>Инспектор Custom Emoji ID</span>
+            <CyberText text="ИНСПЕКТОР CUSTOM EMOJI ID" delay={50} />
           </label>
           <span className="text-[10px] text-[#34d399] font-mono-code">Telegram 8.8+</span>
         </div>
@@ -193,7 +202,7 @@ export const EmojiInspector: React.FC = () => {
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Code2 size={13} className="text-[#38bdf8]" />
-          <span>Готовый код для ботов & постов</span>
+          <CyberText text="ГОТОВЫЙ КОД ДЛЯ БОТОВ & ПОСТОВ" delay={120} />
         </label>
 
         <div className="space-y-2">
@@ -239,7 +248,7 @@ export const EmojiInspector: React.FC = () => {
             </button>
           </div>
 
-          {/* Aiogram 3 / Python Snippet */}
+          {/* Python (Aiogram 3 / Telethon) */}
           <div className="p-2.5 rounded-xl bg-[#090b10] border border-white/10 flex items-center justify-between">
             <div className="min-w-0 pr-2">
               <div className="text-[9px] text-slate-400 font-mono-code">Python (Aiogram 3 / Telebot)</div>
@@ -257,6 +266,27 @@ export const EmojiInspector: React.FC = () => {
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300"
             >
               {copiedKey === 'python' ? <Check size={13} className="text-[#34d399]" /> : <Copy size={13} />}
+            </button>
+          </div>
+
+          {/* Node.js (GrammY / Telegraf) */}
+          <div className="p-2.5 rounded-xl bg-[#090b10] border border-white/10 flex items-center justify-between">
+            <div className="min-w-0 pr-2">
+              <div className="text-[9px] text-slate-400 font-mono-code">Node.js (GrammY / Telegraf)</div>
+              <div className="text-[11px] font-mono-code text-[#c084fc] truncate">
+                {`fmt\`<tg-emoji emoji-id="${selectedEmoji.id}">${selectedEmoji.previewChar}</tg-emoji>\``}
+              </div>
+            </div>
+            <button
+              onClick={() =>
+                handleCopy(
+                  `fmt\`<tg-emoji emoji-id="${selectedEmoji.id}">${selectedEmoji.previewChar}</tg-emoji>\``,
+                  'node'
+                )
+              }
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300"
+            >
+              {copiedKey === 'node' ? <Check size={13} className="text-[#34d399]" /> : <Copy size={13} />}
             </button>
           </div>
         </div>

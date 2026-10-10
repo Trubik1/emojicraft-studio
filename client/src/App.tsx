@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { EmojiConfig } from './types';
+import type { EmojiConfig, BaseShape } from './types';
 import { EmojiCanvas } from './components/EmojiCanvas';
 import { StudioControls } from './components/StudioControls';
 import { BatchGeneratorModal } from './components/BatchGeneratorModal';
@@ -10,15 +10,30 @@ import { MediaConverter } from './components/MediaConverter';
 import { CreationsGallery } from './components/CreationsGallery';
 import { BackgroundParticles } from './components/BackgroundParticles';
 import { useTelegram } from './hooks/useTelegram';
+import { useCyberTilt } from './hooks/useCyberTilt';
 import { Sparkles, Grid3X3, Search, MessageSquare, Film, FolderHeart } from 'lucide-react';
+
+const OMNOM_POSES: BaseShape[] = [
+  'omnom',
+  'omnom-candy',
+  'omnom-eating',
+  'omnom-super',
+  'omnom-happy',
+  'omnom-jump',
+  'omnom-cake',
+];
 
 export const App: React.FC = () => {
   const { user, haptic } = useTelegram();
+
+  // Activate 3D-Tilt & Dynamic Spotlight Glow on all cards
+  useCyberTilt();
 
   // Active Tab: 'studio' | 'media' | 'slicer' | 'inspector' | 'chat' | 'gallery'
   const [activeTab, setActiveTab] = useState<'studio' | 'media' | 'slicer' | 'inspector' | 'chat' | 'gallery'>('studio');
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [mascotBounce, setMascotBounce] = useState(false);
+  const [poseIndex, setPoseIndex] = useState(0);
 
   // Check URL params for deep-linking (e.g. from Telegram Bot /start commands)
   useEffect(() => {
@@ -29,7 +44,7 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Global Emoji Studio State (Defaulting to Om Nom with Cyber Emerald glow!)
+  // Global Emoji Studio State (Defaulting to Om Nom with Cyber Emerald glow from КАРТОЧКА!)
   const [emojiConfig, setEmojiConfig] = useState<EmojiConfig>({
     baseShape: 'omnom',          // 🟢 Ам Ням по умолчанию!
     character: 'S',
@@ -56,6 +71,14 @@ export const App: React.FC = () => {
     haptic.medium();
     setMascotBounce(true);
     setTimeout(() => setMascotBounce(false), 500);
+
+    // Cycle Om Nom poses
+    const nextIdx = (poseIndex + 1) % OMNOM_POSES.length;
+    setPoseIndex(nextIdx);
+    setEmojiConfig((prev) => ({
+      ...prev,
+      baseShape: OMNOM_POSES[nextIdx],
+    }));
   };
 
   return (
@@ -71,9 +94,9 @@ export const App: React.FC = () => {
           <button
             onClick={handleMascotClick}
             className={`w-9 h-9 rounded-2xl bg-[#0e1017] border border-white/10 p-1 flex items-center justify-center relative shadow-md transition-transform ${
-              mascotBounce ? 'scale-125 rotate-6' : 'hover:scale-105'
+              mascotBounce ? 'scale-125 rotate-6' : 'hover:scale-105 active:scale-95'
             }`}
-            title="Кликните Ам Няма!"
+            title="Кликните для смены позы Ам Няма!"
           >
             <img
               src="/omnom/amnumya_010.webp"
@@ -88,7 +111,7 @@ export const App: React.FC = () => {
                 EmojiCraft
               </h1>
               <span className="px-1.5 py-0.2 text-[9px] font-bold rounded-md bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 uppercase tracking-wider font-mono-code">
-                Bento
+                Cyber Bento
               </span>
             </div>
             <p className="text-[10px] text-slate-400">Telegram Studio & Stickers</p>
@@ -104,7 +127,7 @@ export const App: React.FC = () => {
         ) : (
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#11131a] border border-white/10 text-[10px] font-mono-code text-[#34d399]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
-            <span>v2.0 PROD</span>
+            <span>v2.1 PROD</span>
           </div>
         )}
       </header>

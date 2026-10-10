@@ -1,8 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTelegram } from '../hooks/useTelegram';
-import { recordAnimatedWebm } from '../utils/exporter';
+import { recordAnimatedWebm, downloadDataUrl, isVideoRecordingSupported } from '../utils/exporter';
+import { CyberText } from './CyberText';
 import confetti from 'canvas-confetti';
-import { Upload, Film, Type, Sliders } from 'lucide-react';
+import { Upload, Film, Type, Sliders, Sparkles, Download, AlertCircle, RotateCcw } from 'lucide-react';
+
+const MEME_PRESETS = [
+  { top: 'ШОК', bottom: 'КОГДА СДЕЛАЛ СТИКЕР' },
+  { top: 'БАЗА', bottom: 'АМ НЯМ ОДОБРЯЕТ' },
+  { top: 'КРИНЖ', bottom: 'УДАЛИ И НЕ ПОЗОРЬСЯ' },
+  { top: 'СИГМА', bottom: '100% НАСТОЯЩИЙ ML' },
+];
+
+const OMNOM_BADGES = [
+  { id: 'none', name: 'Без Ам Няма', icon: '❌', src: null },
+  { id: 'classic', name: 'Классик #10', icon: '🟢', src: '/omnom/amnumya_010.webp' },
+  { id: 'candy', name: 'С леденцом', icon: '🍬', src: '/omnom/omnom-candy.webp' },
+  { id: 'eating', name: 'Кушает', icon: '😋', src: '/omnom/omnom-eating.webp' },
+  { id: 'super', name: 'Супергерой', icon: '🦸', src: '/omnom/omnom-super.webp' },
+];
 
 export const MediaConverter: React.FC = () => {
   const { haptic } = useTelegram();
@@ -10,6 +26,7 @@ export const MediaConverter: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const badgeImgRef = useRef<HTMLImageElement | null>(null);
 
   const [mediaType, setMediaType] = useState<'video' | 'image' | null>(null);
   const [mediaSrc, setMediaSrc] = useState<string | null>(null);
@@ -18,9 +35,27 @@ export const MediaConverter: React.FC = () => {
   const [hasWhiteBorder, setHasWhiteBorder] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [mediaScale, setMediaScale] = useState<number>(1.0);
+  const [panX, setPanX] = useState<number>(0);
+  const [panY, setPanY] = useState<number>(0);
+  const [selectedBadge, setSelectedBadge] = useState<string>('candy');
+  
   const resolution = 512;
   const [isRecording, setIsRecording] = useState(false);
   const [recordProgress, setRecordProgress] = useState(0);
+  const [iosWarning, setIosWarning] = useState<string | null>(null);
+
+  // Preload Om Nom badge
+  useEffect(() => {
+    const badge = OMNOM_BADGES.find((b) => b.id === selectedBadge);
+    if (badge && badge.src) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = badge.src;
+      badgeImgRef.current = img;
+    } else {
+      badgeImgRef.current = null;
+    }
+  }, [selectedBadge]);
 
   // File upload handler supporting MP4, WebM, MOV, GIF, PNG, WebP
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,21 +69,25 @@ export const MediaConverter: React.FC = () => {
     if (file.type.startsWith('image/')) {
       setMediaType('image');
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.src = url;
-      imgRef.current = img;
+      img.onload = () => {
+        imgRef.current = img;
+      };
     } else {
       setMediaType('video');
     }
   };
 
-  // Video playback speed sync
+  // Video playback speed and playsinline sync
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.playbackRate = playbackSpeed;
+      videoRef.current.play().catch(() => {});
     }
-  }, [playbackSpeed]);
+  }, [playbackSpeed, mediaSrc]);
 
-  // Main canvas render loop
+  // Main canvas render loop (60 FPS)
   useEffect(() => {
     let animId: number;
 
@@ -56,6 +95,7 @@ export const MediaConverter: React.FC = () => {
       const canvas = canvasRef.current;
       const video = videoRef.current;
       const img = imgRef.current;
+      const badgeImg = badgeImgRef.current;
 
       if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -69,7 +109,7 @@ export const MediaConverter: React.FC = () => {
             const sy = (video.videoHeight - minDim) / 2;
 
             ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.translate(canvas.width / 2 + panX, canvas.height / 2 + panY);
             ctx.scale(mediaScale, mediaScale);
             ctx.drawImage(
               video,
@@ -89,7 +129,7 @@ export const MediaConverter: React.FC = () => {
             const sy = (img.naturalHeight - minDim) / 2;
 
             ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.translate(canvas.width / 2 + panX, canvas.height / 2 + panY);
             ctx.scale(mediaScale, mediaScale);
             ctx.drawImage(
               img,
@@ -116,11 +156,11 @@ export const MediaConverter: React.FC = () => {
             ctx.font = 'bold 24px Manrope, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('Загрузите Видео или GIF', canvas.width / 2, canvas.height / 2 - 15);
+            ctx.fillText('Загрузите Видео или Картинку', canvas.width / 2, canvas.height / 2 - 15);
 
             ctx.fillStyle = '#34d399';
             ctx.font = '14px JetBrains Mono, monospace';
-            ctx.fillText('Стандарт Telegram • До 3 сек • VP9', canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText('Стандарт Telegram 512×512 • До 3 сек', canvas.width / 2, canvas.height / 2 + 20);
           }
 
           // 2. White Sticker Border
@@ -130,28 +170,42 @@ export const MediaConverter: React.FC = () => {
             ctx.strokeRect(7, 7, canvas.width - 14, canvas.height - 14);
           }
 
-          // 3. Top Meme Text
+          // 3. Om Nom Reaction Corner Badge
+          if (badgeImg && badgeImg.complete && badgeImg.naturalWidth > 0) {
+            const bSize = 130;
+            const bx = canvas.width - bSize - 12;
+            const by = canvas.height - bSize - 12;
+
+            // Soft drop shadow
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 14;
+            ctx.drawImage(badgeImg, bx, by, bSize, bSize);
+            ctx.restore();
+          }
+
+          // 4. Top Meme Text
           if (topText.trim()) {
-            ctx.font = '900 36px Impact, sans-serif';
+            ctx.font = '900 38px Impact, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            ctx.lineWidth = 6;
+            ctx.lineWidth = 7;
             ctx.strokeStyle = '#000000';
             ctx.strokeText(topText.toUpperCase(), canvas.width / 2, 22);
             ctx.fillStyle = '#ffffff';
             ctx.fillText(topText.toUpperCase(), canvas.width / 2, 22);
           }
 
-          // 4. Bottom Meme Text
+          // 5. Bottom Meme Text
           if (bottomText.trim()) {
-            ctx.font = '900 34px Impact, sans-serif';
+            ctx.font = '900 36px Impact, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
-            ctx.lineWidth = 6;
+            ctx.lineWidth = 7;
             ctx.strokeStyle = '#000000';
-            ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
+            ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 22);
             ctx.fillStyle = '#ffffff';
-            ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
+            ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 22);
           }
         }
       }
@@ -161,19 +215,41 @@ export const MediaConverter: React.FC = () => {
 
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
-  }, [mediaType, topText, bottomText, hasWhiteBorder, mediaScale]);
+  }, [mediaType, topText, bottomText, hasWhiteBorder, mediaScale, panX, panY, selectedBadge]);
+
+  // Export Static PNG Sticker
+  const handleExportPng = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    haptic.medium();
+    const dataUrl = canvas.toDataURL('image/png');
+    downloadDataUrl(dataUrl, `meme_sticker_512x512_${Date.now()}.png`);
+    confetti({
+      particleCount: 45,
+      spread: 60,
+      origin: { y: 0.8 },
+      colors: ['#34d399', '#38bdf8', '#ffffff'],
+    });
+    haptic.success();
+  };
 
   // Export WebM Video Sticker (Telegram 512x512 standard, max 3s)
   const handleExportWebm = async () => {
     if (!canvasRef.current || isRecording) return;
+
+    if (!isVideoRecordingSupported()) {
+      haptic.warning();
+      setIosWarning('Запись WebM видео не поддерживается этим Webview. Скачайте четкий PNG 512×512!');
+      return;
+    }
+
     setIsRecording(true);
     setRecordProgress(0);
     haptic.heavy();
 
-    // Rewind video to start for seamless loop
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play();
+      videoRef.current.play().catch(() => {});
     }
 
     try {
@@ -199,12 +275,20 @@ export const MediaConverter: React.FC = () => {
       });
       haptic.success();
     } catch (err) {
-      console.error('Recording error', err);
+      console.warn('Recording error fallback', err);
       haptic.warning();
+      setIosWarning('Не удалось завершить видеозапись. Скачайте PNG 512×512!');
     } finally {
       setIsRecording(false);
       setRecordProgress(0);
     }
+  };
+
+  const resetFraming = () => {
+    haptic.light();
+    setMediaScale(1.0);
+    setPanX(0);
+    setPanY(0);
   };
 
   return (
@@ -255,7 +339,7 @@ export const MediaConverter: React.FC = () => {
         </div>
 
         {/* Canvas Stage */}
-        <div className="relative flex items-center justify-center p-2 rounded-2xl bg-[#090b10] border border-white/5">
+        <div className="relative flex items-center justify-center p-2 rounded-2xl bg-[#090b10] border border-white/5 overflow-hidden">
           <canvas
             ref={canvasRef}
             width={resolution}
@@ -264,8 +348,21 @@ export const MediaConverter: React.FC = () => {
           />
         </div>
 
-        {/* Action Button */}
-        <div className="mt-4">
+        {/* Warning Toast */}
+        {iosWarning && (
+          <div className="mt-3 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle size={14} className="shrink-0 text-amber-400" />
+              <span className="text-[11px] leading-tight">{iosWarning}</span>
+            </div>
+            <button onClick={() => setIosWarning(null)} className="p-1 hover:text-white">
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mt-4 space-y-2">
           <button
             onClick={handleExportWebm}
             disabled={isRecording}
@@ -293,10 +390,18 @@ export const MediaConverter: React.FC = () => {
               </>
             )}
           </button>
+
+          <button
+            onClick={handleExportPng}
+            className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-all"
+          >
+            <Download size={13} className="text-[#34d399]" />
+            <span>Скачать статичный PNG 512×512</span>
+          </button>
         </div>
       </div>
 
-      {/* Meme Text Controls */}
+      {/* Meme Text Controls & Presets */}
       <div className="bento-card cyber-frame p-4 space-y-3">
         <div className="corner-cross tl" />
         <div className="corner-cross tr" />
@@ -305,10 +410,28 @@ export const MediaConverter: React.FC = () => {
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Type size={13} className="text-[#38bdf8]" />
-          <span>Мемный текст и контур</span>
+          <CyberText text="МЕМНЫЙ ТЕКСТ И ШАБЛОНЫ" delay={50} />
         </label>
 
-        <div className="space-y-2">
+        {/* Quick Meme Presets */}
+        <div className="grid grid-cols-2 gap-1.5">
+          {MEME_PRESETS.map((p, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                haptic.selection();
+                setTopText(p.top);
+                setBottomText(p.bottom);
+              }}
+              className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/10 border border-white/5 text-left transition-all"
+            >
+              <div className="text-[10px] font-bold text-[#34d399] font-mono-code">{p.top}</div>
+              <div className="text-[9px] text-slate-400 truncate">{p.bottom}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-2 pt-1">
           <div>
             <label className="text-[10px] text-slate-400 font-mono-code mb-1 block">Верхний текст</label>
             <input
@@ -348,7 +471,7 @@ export const MediaConverter: React.FC = () => {
         </div>
       </div>
 
-      {/* Video Framing & Speed */}
+      {/* Om Nom Reaction Badge Selector */}
       <div className="bento-card cyber-frame p-4 space-y-3">
         <div className="corner-cross tl" />
         <div className="corner-cross tr" />
@@ -356,25 +479,107 @@ export const MediaConverter: React.FC = () => {
         <div className="corner-cross br" />
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
-          <Sliders size={13} className="text-[#34d399]" />
-          <span>Масштаб и Скорость</span>
+          <Sparkles size={13} className="text-[#34d399]" />
+          <CyberText text="СТИКЕР АМ НЯМА В УГЛУ" delay={100} />
         </label>
+
+        <div className="grid grid-cols-3 gap-1.5">
+          {OMNOM_BADGES.map((b) => {
+            const isSelected = selectedBadge === b.id;
+            return (
+              <button
+                key={b.id}
+                onClick={() => { haptic.selection(); setSelectedBadge(b.id); }}
+                className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                  isSelected
+                    ? 'bg-[#34d399]/15 border-[#34d399] text-white'
+                    : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {b.src ? (
+                  <img src={b.src} alt={b.name} className="w-7 h-7 object-contain" />
+                ) : (
+                  <span className="text-xl">{b.icon}</span>
+                )}
+                <span className="text-[9px] font-mono-code truncate w-full text-center">{b.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Video Framing, Pan & Speed */}
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+            <Sliders size={13} className="text-[#34d399]" />
+            <CyberText text="КАДРИРОВАНИЕ И СКОРОСТЬ" delay={150} />
+          </label>
+
+          {(mediaScale !== 1 || panX !== 0 || panY !== 0) && (
+            <button
+              onClick={resetFraming}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 text-[10px] text-slate-300 hover:text-white"
+            >
+              <RotateCcw size={10} />
+              <span>Сброс</span>
+            </button>
+          )}
+        </div>
 
         {/* Scale Slider */}
         <div className="space-y-1">
           <div className="flex justify-between text-[10px] font-mono-code text-slate-400">
-            <span>Масштаб кадра</span>
+            <span>Масштаб кадра (Zoom)</span>
             <span className="text-[#34d399]">{Math.round(mediaScale * 100)}%</span>
           </div>
           <input
             type="range"
-            min={0.6}
-            max={2.0}
+            min={0.5}
+            max={2.5}
             step={0.05}
             value={mediaScale}
             onChange={(e) => setMediaScale(Number(e.target.value))}
             className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
           />
+        </div>
+
+        {/* Horizontal & Vertical Pan */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="space-y-1">
+            <div className="flex justify-between text-[9px] font-mono-code text-slate-400">
+              <span>Сдвиг X</span>
+              <span className="text-[#34d399]">{panX}px</span>
+            </div>
+            <input
+              type="range"
+              min={-150}
+              max={150}
+              value={panX}
+              onChange={(e) => setPanX(Number(e.target.value))}
+              className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-[9px] font-mono-code text-slate-400">
+              <span>Сдвиг Y</span>
+              <span className="text-[#34d399]">{panY}px</span>
+            </div>
+            <input
+              type="range"
+              min={-150}
+              max={150}
+              value={panY}
+              onChange={(e) => setPanY(Number(e.target.value))}
+              className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+            />
+          </div>
         </div>
 
         {/* Speed buttons */}

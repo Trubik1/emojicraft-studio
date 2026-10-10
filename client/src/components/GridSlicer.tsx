@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTelegram } from '../hooks/useTelegram';
+import { downloadDataUrl, copyPngToClipboard } from '../utils/exporter';
+import { CyberText } from './CyberText';
 import JSZip from 'jszip';
 import confetti from 'canvas-confetti';
-import { Upload, Grid3X3, Download, Eye, HelpCircle } from 'lucide-react';
+import { Upload, Grid3X3, Download, Eye, HelpCircle, Copy, Check, X, Sliders } from 'lucide-react';
 
 interface GridTile {
   index: number;
@@ -28,6 +30,13 @@ export const GridSlicer: React.FC = () => {
   const [tiles, setTiles] = useState<GridTile[]>([]);
   const [isZipping, setIsZipping] = useState(false);
   const [showChatPreview, setShowChatPreview] = useState(false);
+  const [selectedTileModal, setSelectedTileModal] = useState<GridTile | null>(null);
+  const [copiedTileIndex, setCopiedTileIndex] = useState<number | null>(null);
+
+  // Pan & Zoom controls for pre-crop
+  const [imageZoom, setImageZoom] = useState<number>(1.0);
+  const [panOffsetX, setPanOffsetX] = useState<number>(0);
+  const [panOffsetY, setPanOffsetY] = useState<number>(0);
 
   // Generate demo cyber banner if no image uploaded
   useEffect(() => {
@@ -38,64 +47,115 @@ export const GridSlicer: React.FC = () => {
     if (ctx) {
       // Cosmic gradient matching Cyber Bento
       const grad = ctx.createLinearGradient(0, 0, 600, 600);
-      grad.addColorStop(0, '#090b10');
+      grad.addColorStop(0, '#08090c');
       grad.addColorStop(0.5, '#064e3b');
       grad.addColorStop(1, '#022c22');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 600, 600);
 
       // Cyber concentric rings
-      ctx.strokeStyle = 'rgba(52, 211, 153, 0.3)';
+      ctx.strokeStyle = 'rgba(52, 211, 153, 0.35)';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(300, 300, 220, 0, Math.PI * 2);
       ctx.arc(300, 300, 140, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Big Glowing Om Nom / Symbol
-      ctx.font = '130px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🍬', 300, 260);
+      // Big Om Nom / Mascot
+      const omnomImg = new Image();
+      omnomImg.src = '/omnom/amnumya_010.webp';
+      omnomImg.onload = () => {
+        ctx.drawImage(omnomImg, 200, 140, 200, 200);
+        
+        ctx.font = '800 38px Manrope, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText('EMOJICRAFT', 300, 395);
 
-      ctx.font = '800 36px Manrope, sans-serif';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('EMOJI CRAFT', 300, 390);
+        ctx.font = '16px JetBrains Mono, monospace';
+        ctx.fillStyle = '#34d399';
+        ctx.fillText('TELEGRAM CHAT BANNER', 300, 440);
 
-      ctx.font = '16px JetBrains Mono, monospace';
-      ctx.fillStyle = '#34d399';
-      ctx.fillText('TELEGRAM CHAT BANNER', 300, 435);
+        setImageSrc(demoCanvas.toDataURL('image/png'));
+      };
+      omnomImg.onerror = () => {
+        ctx.font = '120px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🍬', 300, 260);
 
-      setImageSrc(demoCanvas.toDataURL('image/png'));
+        ctx.font = '800 36px Manrope, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('EMOJI CRAFT', 300, 390);
+
+        setImageSrc(demoCanvas.toDataURL('image/png'));
+      };
     }
   }, []);
 
-  // Slice image whenever imageSrc or grid changes
+  // Slice image whenever imageSrc, grid, or zoom/pan changes
   useEffect(() => {
     if (!imageSrc) return;
     const img = new Image();
     img.src = imageSrc;
     img.onload = () => {
-      sliceImage(img, selectedGrid.cols, selectedGrid.rows);
+      sliceImage(img, selectedGrid.cols, selectedGrid.rows, imageZoom, panOffsetX, panOffsetY);
     };
-  }, [imageSrc, selectedGrid]);
+  }, [imageSrc, selectedGrid, imageZoom, panOffsetX, panOffsetY]);
 
-  const sliceImage = (img: HTMLImageElement, cols: number, rows: number) => {
-    const tileW = img.width / cols;
-    const tileH = img.height / rows;
+  const sliceImage = (
+    img: HTMLImageElement,
+    cols: number,
+    rows: number,
+    zoom: number,
+    offsetX: number,
+    offsetY: number
+  ) => {
+    // Render source image to an offscreen master canvas with user zoom and pan
+    const masterCanvas = document.createElement('canvas');
+    const masterDim = 600;
+    masterCanvas.width = masterDim;
+    masterCanvas.height = masterDim;
+    const mCtx = masterCanvas.getContext('2d');
+    if (!mCtx) return;
+
+    mCtx.fillStyle = '#08090c';
+    mCtx.fillRect(0, 0, masterDim, masterDim);
+
+    const minDim = Math.min(img.width, img.height);
+    const sx = (img.width - minDim) / 2;
+    const sy = (img.height - minDim) / 2;
+
+    mCtx.save();
+    mCtx.translate(masterDim / 2 + offsetX, masterDim / 2 + offsetY);
+    mCtx.scale(zoom, zoom);
+    mCtx.drawImage(
+      img,
+      sx,
+      sy,
+      minDim,
+      minDim,
+      -masterDim / 2,
+      -masterDim / 2,
+      masterDim,
+      masterDim
+    );
+    mCtx.restore();
+
+    const tileW = masterDim / cols;
+    const tileH = masterDim / rows;
     const newTiles: GridTile[] = [];
 
     let count = 1;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const offCanvas = document.createElement('canvas');
-        offCanvas.width = 100; // Telegram custom emoji standard
+        offCanvas.width = 100; // Telegram custom emoji standard 100x100
         offCanvas.height = 100;
         const ctx = offCanvas.getContext('2d');
 
         if (ctx) {
           ctx.drawImage(
-            img,
+            masterCanvas,
             c * tileW,
             r * tileH,
             tileW,
@@ -108,7 +168,6 @@ export const GridSlicer: React.FC = () => {
 
           // Telegram displays newest messages AT THE BOTTOM!
           // So to display top-to-bottom, the bottom row must be sent FIRST!
-          // sendOrder: 1 = send first (tile from bottom row)
           const sendOrder = (rows - 1 - r) * cols + (c + 1);
 
           newTiles.push({
@@ -134,12 +193,29 @@ export const GridSlicer: React.FC = () => {
     reader.onload = (event) => {
       if (typeof event.target?.result === 'string') {
         setImageSrc(event.target.result);
+        setImageZoom(1.0);
+        setPanOffsetX(0);
+        setPanOffsetY(0);
       }
     };
     reader.readAsDataURL(file);
   };
 
-  // Download ZIP with files already ordered for Telegram upload!
+  // Copy single tile to clipboard
+  const handleCopyTile = async (tile: GridTile) => {
+    haptic.selection();
+    const ok = await copyPngToClipboard(tile.dataUrl);
+    if (ok) {
+      setCopiedTileIndex(tile.index);
+      setTimeout(() => setCopiedTileIndex(null), 2000);
+      haptic.success();
+    } else {
+      // Fallback: download directly
+      downloadDataUrl(tile.dataUrl, `tile_${tile.index}_step_${tile.sendOrder}.png`);
+    }
+  };
+
+  // Download entire ZIP with Telegram Reverse Send Order
   const handleDownloadZip = async () => {
     if (tiles.length === 0) return;
     setIsZipping(true);
@@ -164,7 +240,7 @@ export const GridSlicer: React.FC = () => {
         `✨ EmojiCraft Studio — Нарезка баннера ${selectedGrid.cols}x${selectedGrid.rows} для Telegram.\n\n` +
         `КАК ПРАВИЛЬНО ОТПРАВЛЯТЬ В ЧАТ:\n` +
         `1. В Telegram новые сообщения появляются снизу.\n` +
-        `2. Чтобы постер собрался красиво, отправляйте файлы по номерам: 01_шаг -> 02_шаг -> ... -> ${tiles.length}_шаг.\n` +
+        `2. Чтобы постер собрался красиво, отправляйте файлы строго по номерам шагов: 01_шаг -> 02_шаг -> ... -> ${tiles.length}_шаг.\n` +
         `3. Либо загрузите этот пак в @Stickers как кастомные эмодзи!\n`
       );
 
@@ -179,8 +255,8 @@ export const GridSlicer: React.FC = () => {
       URL.revokeObjectURL(url);
 
       confetti({
-        particleCount: 60,
-        spread: 70,
+        particleCount: 65,
+        spread: 75,
         origin: { y: 0.7 },
         colors: ['#34d399', '#38bdf8', '#ffffff'],
       });
@@ -239,12 +315,17 @@ export const GridSlicer: React.FC = () => {
             {tiles.map((tile) => (
               <div
                 key={tile.index}
-                className="relative rounded-lg overflow-hidden border border-white/10 group aspect-square bg-slate-900"
+                onClick={() => {
+                  haptic.selection();
+                  setSelectedTileModal(tile);
+                }}
+                className="relative rounded-lg overflow-hidden border border-white/10 group aspect-square bg-slate-900 cursor-pointer hover:border-[#34d399] transition-all"
+                title={`Плитка #${tile.index}. Кликните для сохранения!`}
               >
                 <img
                   src={tile.dataUrl}
                   alt={`tile ${tile.index}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
                 {/* Tile Send Order Indicator Badge */}
                 <div className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 backdrop-blur-md text-[8px] font-mono-code text-[#34d399] font-bold">
@@ -259,7 +340,7 @@ export const GridSlicer: React.FC = () => {
         <div className="mt-3 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-start gap-2 text-xs">
           <HelpCircle size={15} className="text-[#34d399] shrink-0 mt-0.5" />
           <div className="text-[11px] text-slate-300 leading-snug">
-            <span className="font-bold text-white">Порядок отправки в Telegram:</span> в чате сообщения накапливаются снизу вверх, поэтому в скачанном ZIP файлы уже пронумерованы в правильном порядке отправки (<span className="text-[#34d399] font-mono-code">#1 → #{tiles.length}</span>)!
+            <span className="font-bold text-white">Кликните любую плитку</span> для быстрого сохранения или скачайте весь ZIP с автоматической нумерацией шагов (<span className="text-[#34d399] font-mono-code">#1 → #{tiles.length}</span>)!
           </div>
         </div>
 
@@ -297,7 +378,7 @@ export const GridSlicer: React.FC = () => {
           <div className="corner-cross br" />
 
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono-code">
-            Как баннер будет выглядеть в чате Telegram
+            Вид баннера в чате Telegram
           </div>
 
           <div className="p-3 rounded-xl bg-[#0f172a]/90 border border-white/5 flex justify-end">
@@ -320,6 +401,69 @@ export const GridSlicer: React.FC = () => {
         </div>
       )}
 
+      {/* Pan & Zoom Crop Adjuster */}
+      <div className="bento-card cyber-frame p-4 space-y-3">
+        <div className="corner-cross tl" />
+        <div className="corner-cross tr" />
+        <div className="corner-cross bl" />
+        <div className="corner-cross br" />
+
+        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
+          <Sliders size={13} className="text-[#34d399]" />
+          <CyberText text="ПОДГОНКА И КАДРИРОВАНИЕ ФОТО" delay={80} />
+        </label>
+
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] font-mono-code text-slate-400">
+              <span>Приближение (Zoom)</span>
+              <span className="text-[#34d399]">{Math.round(imageZoom * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min={0.6}
+              max={2.5}
+              step={0.05}
+              value={imageZoom}
+              onChange={(e) => setImageZoom(Number(e.target.value))}
+              className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="space-y-1">
+              <div className="flex justify-between text-[9px] font-mono-code text-slate-400">
+                <span>Сдвиг X</span>
+                <span className="text-[#34d399]">{panOffsetX}px</span>
+              </div>
+              <input
+                type="range"
+                min={-150}
+                max={150}
+                value={panOffsetX}
+                onChange={(e) => setPanOffsetX(Number(e.target.value))}
+                className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-[9px] font-mono-code text-slate-400">
+                <span>Сдвиг Y</span>
+                <span className="text-[#34d399]">{panOffsetY}px</span>
+              </div>
+              <input
+                type="range"
+                min={-150}
+                max={150}
+                value={panOffsetY}
+                onChange={(e) => setPanOffsetY(Number(e.target.value))}
+                className="w-full accent-[#34d399] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Grid Size Selectors */}
       <div className="bento-card cyber-frame p-4 space-y-3">
         <div className="corner-cross tl" />
@@ -329,7 +473,7 @@ export const GridSlicer: React.FC = () => {
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Grid3X3 size={13} className="text-[#38bdf8]" />
-          <span>Формат сетки нарезки</span>
+          <CyberText text="ФОРМАТ СЕТКИ НАРЕЗКИ" delay={140} />
         </label>
 
         <div className="grid grid-cols-2 gap-2">
@@ -352,6 +496,60 @@ export const GridSlicer: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Single Tile Inspector Modal */}
+      {selectedTileModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bento-card cyber-frame max-w-xs w-full p-4 space-y-3 relative text-center">
+            <button
+              onClick={() => setSelectedTileModal(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+            <h3 className="text-sm font-bold text-white font-mono-code">
+              Тайл #{selectedTileModal.index} • Шаг отправки #{selectedTileModal.sendOrder}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              Размер 100×100 px. Можно скопировать или скачать отдельно:
+            </p>
+            <div className="p-3 bg-[#090b10] rounded-xl flex justify-center border border-white/5">
+              <img
+                src={selectedTileModal.dataUrl}
+                alt="tile preview"
+                className="w-24 h-24 object-contain rounded-lg shadow-lg border border-white/10"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => handleCopyTile(selectedTileModal)}
+                className={`py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                  copiedTileIndex === selectedTileModal.index
+                    ? 'bg-[#34d399]/20 border-[#34d399] text-[#34d399]'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                }`}
+              >
+                {copiedTileIndex === selectedTileModal.index ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copiedTileIndex === selectedTileModal.index ? 'Скопировано!' : 'Копировать'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  downloadDataUrl(
+                    selectedTileModal.dataUrl,
+                    `tile_${selectedTileModal.index}_step_${selectedTileModal.sendOrder}.png`
+                  );
+                  setSelectedTileModal(null);
+                }}
+                className="py-2 px-3 rounded-xl bg-[#34d399] text-black font-extrabold text-xs flex items-center justify-center gap-1.5"
+              >
+                <Download size={14} />
+                <span>Скачать</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

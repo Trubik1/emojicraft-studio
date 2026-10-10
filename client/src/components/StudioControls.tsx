@@ -2,6 +2,7 @@ import React from 'react';
 import type { EmojiConfig, BaseShape, AnimationType } from '../types';
 import { COLOR_PRESETS, FONT_PRESETS, SHAPE_PRESETS, ANIMATION_PRESETS } from '../utils/presets';
 import { useTelegram } from '../hooks/useTelegram';
+import { CyberText } from './CyberText';
 import { Sparkles, Layers, Sliders, Type, Palette, Droplets } from 'lucide-react';
 
 interface Props {
@@ -13,7 +14,7 @@ interface Props {
 export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchModal }) => {
   const { haptic } = useTelegram();
 
-  const QUICK_CHARS = ['S', 'А', 'M', 'Я', '🍬', '👑', '🔥', '💎', '⭐', '7'];
+  const QUICK_CHARS = ['S', 'А', 'M', 'Я', '🍬', '👑', '🔥', '💎', '⭐', '7', 'Z', 'X'];
 
   const setConfig = (partial: Partial<EmojiConfig>) => {
     haptic.selection();
@@ -33,7 +34,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
             <Type size={13} className="text-[#34d399]" />
-            <span>Символ / Буква</span>
+            <CyberText text="СИМВОЛ / БУКВА" delay={50} />
           </label>
 
           <button
@@ -52,7 +53,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
             value={config.character}
             onChange={(e) => setConfig({ character: e.target.value.toUpperCase() })}
             placeholder="S"
-            className="w-14 h-11 text-center text-2xl font-black rounded-xl bg-[#090b10] border border-white/10 text-white focus:outline-none focus:border-[#34d399] transition-colors"
+            className="w-14 h-11 text-center text-2xl font-black rounded-xl bg-[#090b10] border border-white/10 text-white focus:outline-none focus:border-[#34d399] transition-colors font-mono-code"
           />
 
           {/* Quick preset chips */}
@@ -74,7 +75,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
         </div>
       </div>
 
-      {/* 2. Base Shape Picker (With Om Nom!) */}
+      {/* 2. Base Shape Picker (With Real Om Nom Sprites) */}
       <div className="bento-card cyber-frame p-4 space-y-3">
         <div className="corner-cross tl" />
         <div className="corner-cross tr" />
@@ -83,10 +84,10 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Layers size={13} className="text-[#38bdf8]" />
-          <span>Базовый персонаж / Форма</span>
+          <CyberText text="БАЗОВЫЙ ПЕРСОНАЖ / ФОРМА" delay={120} />
         </label>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 max-h-[260px] overflow-y-auto pr-1">
           {SHAPE_PRESETS.map((shape) => {
             const isSelected = config.baseShape === shape.id;
             return (
@@ -99,7 +100,15 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
                     : 'bg-white/[0.03] border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="text-xl shrink-0">{shape.icon}</span>
+                {shape.sprite ? (
+                  <img
+                    src={shape.sprite}
+                    alt={shape.name}
+                    className="w-7 h-7 object-contain shrink-0 filter drop-shadow-sm"
+                  />
+                ) : (
+                  <span className="text-xl shrink-0">{shape.icon}</span>
+                )}
                 <div className="truncate min-w-0">
                   <div className="text-[11px] font-bold truncate text-white">{shape.name}</div>
                   <div className="text-[9px] text-slate-400 truncate">{shape.desc}</div>
@@ -119,7 +128,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Sparkles size={13} className="text-[#fbbf24]" />
-          <span>Анимационный эффект</span>
+          <CyberText text="АНИМАЦИОННЫЙ ЭФФЕКТ" delay={180} />
         </label>
 
         <div className="grid grid-cols-2 gap-2">
@@ -152,7 +161,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Palette size={13} className="text-[#c084fc]" />
-          <span>Цветовая палитра 3D Глянца</span>
+          <CyberText text="ЦВЕТОВАЯ ПАЛИТРА 3D ГЛЯНЦА" delay={240} />
         </label>
 
         <div className="grid grid-cols-3 gap-2">
@@ -193,7 +202,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
 
         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 font-mono-code">
           <Sliders size={13} className="text-[#34d399]" />
-          <span>Тонкая настройка эффектов</span>
+          <CyberText text="ТОНКАЯ НАСТРОЙКА ЭФФЕКТОВ" delay={300} />
         </label>
 
         <div className="grid grid-cols-2 gap-2">
@@ -206,7 +215,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
             }`}
           >
             <span className="flex items-center gap-1.5 font-medium">
-              <Droplets size={13} />
+              <Droplets size={13} className="text-[#38bdf8]" />
               Капли (Drip)
             </span>
             <span className="font-mono-code text-[10px] font-bold">{config.hasDrip ? 'ВКЛ' : 'ВЫКЛ'}</span>
@@ -221,7 +230,7 @@ export const StudioControls: React.FC<Props> = ({ config, onChange, onOpenBatchM
             }`}
           >
             <span className="flex items-center gap-1.5 font-medium">
-              <Sparkles size={13} />
+              <Sparkles size={13} className="text-[#fbbf24]" />
               Неон аура
             </span>
             <span className="font-mono-code text-[10px] font-bold">{config.hasGlow ? 'ВКЛ' : 'ВЫКЛ'}</span>

@@ -28,108 +28,60 @@ export function renderEmojiFrame({ ctx, width, height, time, config }: RenderCon
   ctx.restore();
 }
 
+const imageCache = new Map<string, HTMLImageElement>();
+
+const OMNOM_SPRITES: Record<string, string> = {
+  'omnom': '/omnom/amnumya_010.webp',
+  'omnom-candy': '/omnom/omnom-candy.webp',
+  'omnom-eating': '/omnom/omnom-eating.webp',
+  'omnom-super': '/omnom/omnom-super.webp',
+  'omnom-happy': '/omnom/omnom-happy.webp',
+  'omnom-jump': '/omnom/omnom-jump.webp',
+  'omnom-cake': '/omnom/omnom-cake.webp',
+};
+
 function drawBaseShape(ctx: CanvasRenderingContext2D, shape: string, time: number, config: EmojiConfig) {
   ctx.save();
 
-  if (shape === 'omnom') {
-    // 🟢 Фирменный Ам Ням (Om Nom)
-    const cx = 100;
-    const cy = 120;
+  if (shape.startsWith('omnom')) {
+    // 🟢 Аутентичный высокодетализированный Ам Ням (WebP-спрайты из КАРТОЧКА)
+    const spriteUrl = OMNOM_SPRITES[shape] || OMNOM_SPRITES['omnom'];
+    let img = imageCache.get(spriteUrl);
+    if (!img) {
+      img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = spriteUrl;
+      imageCache.set(spriteUrl, img);
+    }
 
-    // Антенка с шариком на макушке
+    // Мягкая естественная тень под Ам Нямом
+    const shadowGrad = ctx.createRadialGradient(100, 184, 5, 100, 184, 60);
+    shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+    shadowGrad.addColorStop(0.6, 'rgba(0, 0, 0, 0.15)');
+    shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = shadowGrad;
     ctx.beginPath();
-    ctx.moveTo(100, 72);
-    ctx.bezierCurveTo(96, 56, 108, 46, 105, 38);
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#15803d';
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(106, 36, 6.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#4ade80';
+    ctx.ellipse(100, 184, 55, 12, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = '#166534';
-    ctx.stroke();
 
-    // Круглое зеленое тельце Ам Няма с мягким градиентом
-    const bodyGrad = ctx.createRadialGradient(cx - 15, cy - 25, 12, cx, cy, 68);
-    bodyGrad.addColorStop(0, '#86efac'); // bright lime highlight
-    bodyGrad.addColorStop(0.35, '#22c55e'); // vibrant green
-    bodyGrad.addColorStop(0.8, '#16a34a'); // green
-    bodyGrad.addColorStop(1, '#15803d'); // deep shadow green
-
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, 64, 58, 0, 0, Math.PI * 2);
-    ctx.fillStyle = bodyGrad;
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#14532d';
-    ctx.stroke();
-
-    // Милые нижние лапки
-    [64, 136].forEach((pawX) => {
+    if (img.complete && img.naturalWidth > 0) {
+      // Идеальное позиционирование спрайта на холсте
+      const targetSize = 135;
+      const x = 100 - targetSize / 2;
+      const y = 126 - targetSize / 2;
+      ctx.drawImage(img, x, y, targetSize, targetSize);
+    } else {
+      // Резервный градиент на время первого обращения к картинке
+      const cx = 100, cy = 125;
+      const bodyGrad = ctx.createRadialGradient(cx - 15, cy - 25, 12, cx, cy, 68);
+      bodyGrad.addColorStop(0, '#86efac');
+      bodyGrad.addColorStop(0.35, '#22c55e');
+      bodyGrad.addColorStop(1, '#15803d');
       ctx.beginPath();
-      ctx.ellipse(pawX, 168, 14, 9, 0, 0, Math.PI * 2);
-      ctx.fillStyle = '#16a34a';
+      ctx.ellipse(cx, cy, 60, 52, 0, 0, Math.PI * 2);
+      ctx.fillStyle = bodyGrad;
       ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#14532d';
-      ctx.stroke();
-    });
-
-    // Большие выразительные мультяшные глазки (смотрят вверх на конфету/букву)
-    const eyeY = 110;
-    const leftEyeX = 76;
-    const rightEyeX = 124;
-    const eyeR = 21;
-
-    [leftEyeX, rightEyeX].forEach((ex) => {
-      // Белок
-      ctx.beginPath();
-      ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#14532d';
-      ctx.stroke();
-
-      // Зрачок смотрящий наверх
-      const pupilX = ex + (ex < 100 ? 3 : -3);
-      const pupilY = eyeY - 8;
-      ctx.beginPath();
-      ctx.arc(pupilX, pupilY, 11, 0, Math.PI * 2);
-      ctx.fillStyle = '#0f172a';
-      ctx.fill();
-
-      // Блики
-      ctx.beginPath();
-      ctx.arc(pupilX - 3.5, pupilY - 3.5, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(pupilX + 2.5, pupilY + 2.5, 2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.fill();
-    });
-
-    // Улыбка и два белых зубика
-    ctx.beginPath();
-    ctx.arc(cx, 142, 16, 0.1 * Math.PI, 0.9 * Math.PI);
-    ctx.lineWidth = 3.5;
-    ctx.strokeStyle = '#14532d';
-    ctx.stroke();
-
-    [-6, 6].forEach((tx) => {
-      ctx.beginPath();
-      ctx.roundRect(cx + tx - 4, 142, 8, 8, [0, 0, 3, 3]);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#14532d';
-      ctx.stroke();
-    });
+    }
   } else if (shape === 'emoji-look-up') {
     // Face body - yellow 3D sphere
     const cx = 100;
@@ -457,12 +409,12 @@ function drawStyledLetter(
   time: number
 ) {
   const char = config.character || 'S';
-  const isHeadMounted = config.baseShape === 'emoji-look-up' || config.baseShape === 'omnom';
+  const isHeadMounted = config.baseShape.startsWith('omnom') || config.baseShape === 'emoji-look-up';
 
   // Base position for the letter:
   // If it's the look-up emoji or Om Nom, position on the forehead/hovering above!
   const basePosX = 100;
-  const basePosY = isHeadMounted ? 65 : 105;
+  const basePosY = isHeadMounted ? 56 : 105;
 
   let posX = basePosX + config.letterOffsetX;
   let posY = basePosY + config.letterOffsetY;
